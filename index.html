@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Efstathios Paraskevopoulos — Meta Ads & E-commerce</title>
+  <meta name="description" content="Efstathios Paraskevopoulos — Meta Ads & E-commerce GOAT. E-shop Developer. Creator, mentor, developer." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div class="loader" id="loader">
+    <div class="loader__inner">
+      <span class="loader__label">EP — CINEMATIC PORTFOLIO</span>
+      <span class="loader__pct" id="loaderPct">0%</span>
+      <div class="loader__bar"><div class="loader__fill" id="loaderFill"></div></div>
+    </div>
+  </div>
+
+  <!-- GRAIN -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- SCROLL PROGRESS -->
+  <div class="progressbar" aria-hidden="true"><div class="progressbar__fill" id="progressFill"></div></div>
+
+  <!-- NAV -->
+  <header class="nav">
+    <a class="nav__logo" href="#hero">EP<span class="nav__dot">.</span></a>
+    <nav class="nav__links">
+      <a href="#stats">Numbers</a>
+      <a href="#pillars">Pillars</a>
+      <a href="#work">Work</a>
+      <a href="#finale">Contact</a>
+    </nav>
+    <a class="nav__cta" href="#finale"><span class="nav__pulse"></span>Available for projects</a>
+  </header>
+
+  <main>
+    <!-- ═══ 01 · HERO ORBIT ═══ -->
+    <section class="hero" id="hero">
+      <div class="hero__stage">
+        <canvas class="hero__canvas" id="heroCanvas"></canvas>
+        <div class="hero__vignette"></div>
+
+        <div class="hero__type">
+          <p class="hero__kicker" id="heroKicker">Creator · Mentor · Developer</p>
+          <h1 class="hero__name" aria-label="Efstathios Paraskevopoulos">
+            <span class="hero__line" id="nameLine1">EFSTATHIOS</span>
+            <span class="hero__line hero__line--accent" id="nameLine2">PARASKEVOPOULOS</span>
+          </h1>
+          <p class="hero__sub" id="heroSub">Meta Ads &amp; E-commerce GOAT. <em>E-shop Developer.</em></p>
+        </div>
+
+        <div class="hero__scrollcue" id="scrollCue">
+          <span>Scroll to orbit</span>
+          <div class="hero__scrollline"></div>
+        </div>
+
+        <div class="hero__meta hero__meta--left" id="heroMetaL">EST. ATHENS, GR</div>
+        <div class="hero__meta hero__meta--right" id="heroMetaR">ORBIT <span id="orbitDeg">000</span>°</div>
+
+        <div class="hero__hud" aria-hidden="true" id="heroHud">
+          <span class="hud__corner hud__corner--tl"></span>
+          <span class="hud__corner hud__corner--tr"></span>
+          <span class="hud__corner hud__corner--bl"></span>
+          <span class="hud__corner hud__corner--br"></span>
+          <span class="hud__tag hud__tag--top">EP-01 · HELMET CAM</span>
+          <span class="hud__tag hud__tag--side">TELEMETRY LIVE</span>
+          <span class="hud__tag hud__tag--hint">HOVER MY FACE — DEPLOY THE HELMET</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 02 · STATS ═══ -->
+    <section class="stats" id="stats">
+      <p class="section-label"><span class="section-label__num">00</span> THE NUMBERS</p>
+      <div class="stats__grid">
+        <div class="stat">
+          <div class="stat__value"><span class="stat__num" data-count="5" data-suffix="M+">0</span></div>
+          <div class="stat__key">YouTube subscribers reached</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value"><span class="stat__num" data-count="10" data-suffix="x">0</span></div>
+          <div class="stat__key">Top-tier Meta Ads ROAS</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value"><span class="stat__num" data-count="150" data-suffix="+">0</span></div>
+          <div class="stat__key">Elite mentorships delivered</div>
+        </div>
+        <div class="stat">
+          <div class="stat__value stat__value--live"><span class="stat__live-dot"></span>ACTIVE</div>
+          <div class="stat__key">Computer Science student</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ MARQUEE ═══ -->
+    <div class="marquee" aria-hidden="true">
+      <div class="marquee__track">
+        <span>META ADS</span><i>✦</i><span class="o">SHOPIFY</span><i>✦</i><span>YOUTUBE AUTOMATION</span><i>✦</i><span class="o">E-COMMERCE</span><i>✦</i><span>ROAS SCALING</span><i>✦</i><span class="o">WEB DEVELOPMENT</span><i>✦</i>
+        <span>META ADS</span><i>✦</i><span class="o">SHOPIFY</span><i>✦</i><span>YOUTUBE AUTOMATION</span><i>✦</i><span class="o">E-COMMERCE</span><i>✦</i><span>ROAS SCALING</span><i>✦</i><span class="o">WEB DEVELOPMENT</span><i>✦</i>
+      </div>
+    </div>
+
+    <!-- ═══ 03 · THREE PILLARS (over clip 2) ═══ -->
+    <section class="pillars" id="pillars">
+      <div class="pillars__stage">
+        <video class="bgvideo" id="builderVideo" src="/media/builder.mp4" muted playsinline preload="auto"></video>
+        <div class="stage-shade"></div>
+        <p class="section-label section-label--overlay"><span class="section-label__num">01–03</span> THE THREE PILLARS</p>
+
+        <article class="pillar" data-pillar="0">
+          <span class="pillar__index">01</span>
+          <h2 class="pillar__title">THE CREATOR</h2>
+          <p class="pillar__body">YouTube automation channels dominating the space with millions of subscribers.</p>
+        </article>
+        <article class="pillar" data-pillar="1">
+          <span class="pillar__index">02</span>
+          <h2 class="pillar__title">THE MENTOR</h2>
+          <p class="pillar__body">Mentorship programs guiding people through e-commerce and Meta Ads success.</p>
+        </article>
+        <article class="pillar" data-pillar="2">
+          <span class="pillar__index">03</span>
+          <h2 class="pillar__title">THE DEVELOPER</h2>
+          <p class="pillar__body">Custom e-shop and website development for brands ready to scale.</p>
+        </article>
+
+        <div class="pillars__progress">
+          <span class="pillars__tick" data-tick="0"></span>
+          <span class="pillars__tick" data-tick="1"></span>
+          <span class="pillars__tick" data-tick="2"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ MARQUEE 2 ═══ -->
+    <div class="marquee marquee--reverse" aria-hidden="true">
+      <div class="marquee__track">
+        <span class="o">CRO</span><i>✦</i><span>FUNNELS</span><i>✦</i><span class="o">CREATIVE STRATEGY</span><i>✦</i><span>LIQUID</span><i>✦</i><span class="o">ANALYTICS</span><i>✦</i><span>BRAND BUILDING</span><i>✦</i>
+        <span class="o">CRO</span><i>✦</i><span>FUNNELS</span><i>✦</i><span class="o">CREATIVE STRATEGY</span><i>✦</i><span>LIQUID</span><i>✦</i><span class="o">ANALYTICS</span><i>✦</i><span>BRAND BUILDING</span><i>✦</i>
+      </div>
+    </div>
+
+    <!-- ═══ 04 · THE FUTURE (jarvis) ═══ -->
+    <section class="future" id="future">
+      <div class="future__stage">
+        <video class="bgvideo" id="jarvisVideo" src="/media/jarvis.mp4" muted playsinline preload="auto" loop></video>
+        <div class="stage-shade"></div>
+        <p class="section-label section-label--overlay"><span class="section-label__num">04</span> THE FUTURE</p>
+        <div class="future__content">
+          <h2 class="future__quote">
+            <span class="word">WORK</span> <span class="word">FROM</span> <span class="word">THE</span> <span class="word future__accent">FUTURE,</span><br />
+            <span class="word">ENRICHING</span> <span class="word">THE</span> <span class="word future__accent">PRESENT.</span>
+          </h2>
+          <p class="future__attrib">— running the operation with an AI copilot</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 05 · WORK (over clip 3) ═══ -->
+    <section class="work" id="work">
+      <div class="work__stage">
+        <video class="bgvideo" id="creatorVideo" src="/media/creator.mp4" muted playsinline preload="auto"></video>
+        <div class="stage-shade"></div>
+        <p class="section-label section-label--overlay"><span class="section-label__num">05</span> SELECTED WORK</p>
+        <h2 class="work__heading" id="workHeading">PROOF, NOT PROMISES.</h2>
+
+        <div class="work__cards">
+          <a class="card" href="#finale">
+            <span class="card__num">W/01</span>
+            <h3 class="card__title">E-commerce Brands</h3>
+            <p class="card__pitch">Stores scaled with creative-first Meta Ads and relentless ROAS discipline.</p>
+            <span class="card__arrow">→</span>
+          </a>
+          <a class="card" href="#finale">
+            <span class="card__num">W/02</span>
+            <h3 class="card__title">Mentorship Success Stories</h3>
+            <p class="card__pitch">Students taken from first store to consistent, profitable ad accounts.</p>
+            <span class="card__arrow">→</span>
+          </a>
+          <a class="card" href="#finale">
+            <span class="card__num">W/03</span>
+            <h3 class="card__title">Web Development</h3>
+            <p class="card__pitch">Custom e-shops engineered to convert — built for brands ready to scale.</p>
+            <span class="card__arrow">→</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 06 · TRUST ═══ -->
+    <section class="trust" id="trust">
+      <p class="section-label"><span class="section-label__num">06</span> DON'T TAKE MY WORD FOR IT</p>
+      <div class="trust__grid">
+        <figure class="tcard">
+          <div class="tcard__stars">★★★★★</div>
+          <blockquote class="tcard__quote">"Went from zero to my first profitable month in nine weeks. The ad account structure alone was worth the whole program."</blockquote>
+          <figcaption class="tcard__who">Nikos K. <span>— Mentorship student, e-shop owner</span></figcaption>
+        </figure>
+        <figure class="tcard">
+          <div class="tcard__stars">★★★★★</div>
+          <blockquote class="tcard__quote">"His Meta Ads restructure took our ROAS from 1.8 to 6.4 in two months. Same budget, same products — completely different business."</blockquote>
+          <figcaption class="tcard__who">D2C Brand Founder <span>— Scaling client</span></figcaption>
+        </figure>
+        <figure class="tcard">
+          <div class="tcard__stars">★★★★★</div>
+          <blockquote class="tcard__quote">"The custom storefront he built loads instantly and converts more than double our old theme. Best investment we made this year."</blockquote>
+          <figcaption class="tcard__who">Boutique Brand, Athens <span>— Web development client</span></figcaption>
+        </figure>
+      </div>
+      <div class="trust__badges">
+        <span class="badge"><i>✓</i> 7-figure ad spend managed</span>
+        <span class="badge"><i>✓</i> 4.9/5 average mentor rating</span>
+        <span class="badge"><i>✓</i> 300+ store &amp; ad account audits</span>
+        <span class="badge"><i>✓</i> Every build 100% custom code</span>
+      </div>
+    </section>
+
+    <!-- ═══ 07 · FINALE (over clip 4) ═══ -->
+    <section class="finale" id="finale">
+      <div class="finale__stage">
+        <video class="bgvideo" id="closerVideo" src="/media/closer.mp4" muted playsinline preload="auto"></video>
+        <div class="stage-shade stage-shade--finale"></div>
+        <div class="finale__content">
+          <h2 class="finale__heading" id="finaleHeading">
+            <span class="finale__word">Want</span> <span class="finale__word">results</span> <span class="finale__word">like</span> <span class="finale__word">these</span>
+            <span class="finale__word">for</span> <span class="finale__word">your</span> <span class="finale__word finale__word--accent">business?</span>
+          </h2>
+          <div class="finale__ctas" id="finaleCtas">
+            <a class="btn btn--primary" href="#" rel="noopener">Join the Mentorship</a>
+            <a class="btn btn--ghost" href="https://www.youtube.com" target="_blank" rel="noopener">Watch on YouTube</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer__top">
+      <span class="footer__big">EP<span class="nav__dot">.</span></span>
+      <div class="footer__cols">
+        <div class="footer__col">
+          <span class="footer__col-label">Channels</span>
+          <a href="https://www.youtube.com" target="_blank" rel="noopener">YouTube ↗</a>
+          <a href="#" rel="noopener">Mentorship ↗</a>
+        </div>
+        <div class="footer__col">
+          <span class="footer__col-label">Code</span>
+          <a href="https://github.com/efstathios-paraskevopoulos" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <span>© 2026 Efstathios Paraskevopoulos</span>
+      <span>Athens · Worldwide</span>
+    </div>
+  </footer>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
