@@ -26,6 +26,13 @@
   <!-- SCROLL PROGRESS -->
   <div class="progressbar" aria-hidden="true"><div class="progressbar__fill" id="progressFill"></div></div>
 
+  <!-- SIDE PROGRESS RAIL (desktop) -->
+  <aside class="rail" id="rail" aria-hidden="true">
+    <span class="rail__pct" id="railPct">00</span>
+    <div class="rail__track"><div class="rail__fill" id="railFill"></div></div>
+    <div class="rail__dots" id="railDots"></div>
+  </aside>
+
   <!-- NAV -->
   <header class="nav">
     <a class="nav__logo" href="#hero">EP<span class="nav__dot">.</span></a>
@@ -199,34 +206,115 @@
       </div>
     </section>
 
-    <!-- ═══ 05 · WORK (over clip 3) ═══ -->
+    <!-- ═══ 05 · WORK — horizontal gallery (over clip 3) ═══ -->
     <section class="work" id="work">
-      <div class="work__stage">
+      <div class="work__pin">
         <video class="bgvideo" id="creatorVideo" src="/media/creator.mp4" muted playsinline preload="metadata"></video>
         <div class="stage-shade"></div>
-        <p class="section-label section-label--overlay"><span class="section-label__num">05</span> SELECTED WORK</p>
-        <h2 class="work__heading" id="workHeading">PROOF, NOT PROMISES.</h2>
+        <div class="work__head">
+          <p class="section-label section-label--overlay"><span class="section-label__num">05</span> SELECTED WORK</p>
+          <h2 class="work__heading" id="workHeading">PROOF, NOT PROMISES.</h2>
+          <span class="work__hint">SCROLL <span class="work__hint-arrow">→</span></span>
+        </div>
 
-        <div class="work__cards">
-          <a class="card" href="#finale">
-            <span class="card__num">W/01</span>
-            <h3 class="card__title">E-commerce Brands</h3>
-            <p class="card__pitch">Stores scaled with creative-first Meta Ads and relentless ROAS discipline.</p>
-            <span class="card__arrow">→</span>
+        <div class="work__track" id="workTrack">
+          <a class="wcard" href="#finale">
+            <span class="wcard__num">01</span>
+            <div class="wcard__body">
+              <span class="wcard__tag">E-commerce · Meta Ads</span>
+              <h3 class="wcard__title">Scaled DTC Brands</h3>
+              <p class="wcard__pitch">Stores taken from break-even to profitable scale with creative-first Meta Ads and relentless ROAS discipline.</p>
+            </div>
+            <div class="wcard__foot"><span class="wcard__metric">6.4×</span><span class="wcard__metriclabel">peak ROAS</span><span class="wcard__arrow">→</span></div>
           </a>
-          <a class="card" href="#finale">
-            <span class="card__num">W/02</span>
-            <h3 class="card__title">Mentorship Success Stories</h3>
-            <p class="card__pitch">Students taken from first store to consistent, profitable ad accounts.</p>
-            <span class="card__arrow">→</span>
+          <a class="wcard" href="#finale">
+            <span class="wcard__num">02</span>
+            <div class="wcard__body">
+              <span class="wcard__tag">Mentorship</span>
+              <h3 class="wcard__title">Student Success Stories</h3>
+              <p class="wcard__pitch">People taken from their first store and ad account to consistent, profitable months — with the exact playbooks I run on client work.</p>
+            </div>
+            <div class="wcard__foot"><span class="wcard__metric">9wk</span><span class="wcard__metriclabel">to first profit</span><span class="wcard__arrow">→</span></div>
           </a>
-          <a class="card" href="#finale">
-            <span class="card__num">W/03</span>
-            <h3 class="card__title">Web Development</h3>
-            <p class="card__pitch">Custom e-shops engineered to convert — built for brands ready to scale.</p>
-            <span class="card__arrow">→</span>
+          <a class="wcard" href="#finale">
+            <span class="wcard__num">03</span>
+            <div class="wcard__body">
+              <span class="wcard__tag">Web Development</span>
+              <h3 class="wcard__title">Custom E-shops</h3>
+              <p class="wcard__pitch">High-converting storefronts in clean, fast code — engineered to load instantly and convert, built for brands ready to scale.</p>
+            </div>
+            <div class="wcard__foot"><span class="wcard__metric">96</span><span class="wcard__metriclabel">Lighthouse score</span><span class="wcard__arrow">→</span></div>
+          </a>
+          <a class="wcard" href="#finale">
+            <span class="wcard__num">04</span>
+            <div class="wcard__body">
+              <span class="wcard__tag">Creative Strategy</span>
+              <h3 class="wcard__title">Ad Testing Systems</h3>
+              <p class="wcard__pitch">Structured creative-testing pipelines that find winners fast and kill losers faster — dropping CPAs while protecting margin.</p>
+            </div>
+            <div class="wcard__foot"><span class="wcard__metric">-34%</span><span class="wcard__metriclabel">avg CPA</span><span class="wcard__arrow">→</span></div>
+          </a>
+          <a class="wcard" href="#finale">
+            <span class="wcard__num">05</span>
+            <div class="wcard__body">
+              <span class="wcard__tag">YouTube Automation</span>
+              <h3 class="wcard__title">Faceless Channels</h3>
+              <p class="wcard__pitch">Automated content channels engineered to dominate their niche and compound views into millions of subscribers.</p>
+            </div>
+            <div class="wcard__foot"><span class="wcard__metric">M+</span><span class="wcard__metriclabel">subscribers reached</span><span class="wcard__arrow">→</span></div>
+          </a>
+          <a class="wcard wcard--cta" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27d%20like%20to%20work%20together." target="_blank" rel="noopener">
+            <div class="wcard__body">
+              <h3 class="wcard__title">Your brand<br />is next.</h3>
+              <p class="wcard__pitch">Let's map the fastest honest path from where you are to where you want to be.</p>
+            </div>
+            <div class="wcard__foot"><span class="wcard__metric wcard__metric--cta">Start →</span></div>
           </a>
         </div>
+      </div>
+    </section>
+
+    <!-- ═══ CAPABILITIES — hover-expand list ═══ -->
+    <section class="caps" id="caps">
+      <div class="caps__head reveal">
+        <span class="eyebrow"><span class="eyebrow__dot"></span> Capabilities</span>
+        <h2 class="caps__title">What I actually <em>do.</em></h2>
+      </div>
+      <ul class="caps__list" id="capsList">
+        <li class="cap" data-cap="Meta Ads" data-num="01">
+          <span class="cap__idx">01</span>
+          <span class="cap__name">Meta Ads Buying &amp; Scaling</span>
+          <span class="cap__desc">Full-funnel account structure, relentless creative testing and disciplined budget scaling that pushes ROAS without torching margin.</span>
+          <span class="cap__arrow">→</span>
+        </li>
+        <li class="cap" data-cap="E-shops" data-num="02">
+          <span class="cap__idx">02</span>
+          <span class="cap__name">Custom E-commerce Builds</span>
+          <span class="cap__desc">High-converting storefronts in clean, fast, custom code — engineered to load instantly and turn traffic into revenue.</span>
+          <span class="cap__arrow">→</span>
+        </li>
+        <li class="cap" data-cap="CRO" data-num="03">
+          <span class="cap__idx">03</span>
+          <span class="cap__name">Conversion Rate Optimization</span>
+          <span class="cap__desc">Forensic funnel audits and page rebuilds that fix the leaks quietly killing your revenue before you spend another cent on ads.</span>
+          <span class="cap__arrow">→</span>
+        </li>
+        <li class="cap" data-cap="YouTube" data-num="04">
+          <span class="cap__idx">04</span>
+          <span class="cap__name">YouTube Automation</span>
+          <span class="cap__desc">Faceless content channels engineered to dominate a niche and compound views into millions of subscribers.</span>
+          <span class="cap__arrow">→</span>
+        </li>
+        <li class="cap" data-cap="Mentorship" data-num="05">
+          <span class="cap__idx">05</span>
+          <span class="cap__name">1:1 Mentorship</span>
+          <span class="cap__desc">Direct, no-fluff guidance taking you step by step from first store to consistent, profitable months.</span>
+          <span class="cap__arrow">→</span>
+        </li>
+      </ul>
+      <div class="caps__preview" id="capsPreview" aria-hidden="true">
+        <div class="caps__preview-num"></div>
+        <div class="caps__preview-label"></div>
       </div>
     </section>
 
@@ -237,33 +325,29 @@
         <h2 class="process__title">A system, <em>not</em> a guess.</h2>
         <p class="process__lead">Every engagement runs the same disciplined path — from forensic teardown to profitable scale. No hopium, no vague promises.</p>
       </div>
-      <div class="process__grid">
-        <article class="pstep reveal">
+      <div class="process__stack" id="processStack">
+        <article class="pstep" style="--i:0">
           <div class="pstep__inner">
-            <span class="pstep__num">01</span>
-            <h3 class="pstep__title">Audit</h3>
-            <p class="pstep__body">A forensic teardown of your store, funnel and ad account. We find exactly what's leaking money before spending another cent.</p>
+            <div class="pstep__lead"><span class="pstep__num">01</span><h3 class="pstep__title">Audit</h3></div>
+            <p class="pstep__body">A forensic teardown of your store, funnel and ad account. We find exactly what's leaking money before spending another cent — no guesswork, just data.</p>
           </div>
         </article>
-        <article class="pstep reveal">
+        <article class="pstep" style="--i:1">
           <div class="pstep__inner">
-            <span class="pstep__num">02</span>
-            <h3 class="pstep__title">Strategy</h3>
-            <p class="pstep__body">A clear, creative-first plan — offers, angles, funnel and account structure mapped to your margins and goals.</p>
+            <div class="pstep__lead"><span class="pstep__num">02</span><h3 class="pstep__title">Strategy</h3></div>
+            <p class="pstep__body">A clear, creative-first plan — offers, angles, funnel and account structure mapped precisely to your margins and goals.</p>
           </div>
         </article>
-        <article class="pstep reveal">
+        <article class="pstep" style="--i:2">
           <div class="pstep__inner">
-            <span class="pstep__num">03</span>
-            <h3 class="pstep__title">Build &amp; Launch</h3>
-            <p class="pstep__body">Custom storefront, tracking and campaigns shipped and live. Clean code, fast load, and creatives built to convert.</p>
+            <div class="pstep__lead"><span class="pstep__num">03</span><h3 class="pstep__title">Build &amp; Launch</h3></div>
+            <p class="pstep__body">Custom storefront, tracking and campaigns shipped and live. Clean code, fast load, and creatives engineered to convert.</p>
           </div>
         </article>
-        <article class="pstep reveal">
+        <article class="pstep" style="--i:3">
           <div class="pstep__inner">
-            <span class="pstep__num">04</span>
-            <h3 class="pstep__title">Scale</h3>
-            <p class="pstep__body">Ruthless testing, budget scaling and iteration — pushing ROAS up while protecting profit, week after week.</p>
+            <div class="pstep__lead"><span class="pstep__num">04</span><h3 class="pstep__title">Scale</h3></div>
+            <p class="pstep__body">Ruthless testing, budget scaling and iteration — pushing ROAS up while protecting profit, week after week after week.</p>
           </div>
         </article>
       </div>

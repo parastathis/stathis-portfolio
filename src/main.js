@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 /* ────────────────────────────────────────────
    LENIS ⇆ SCROLLTRIGGER
    ──────────────────────────────────────────── */
-const lenis = new Lenis({ lerp: 0.1, wheelMultiplier: 1 });
+const lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 1, touchMultiplier: 1.5, syncTouch: true });
 window.lenis = lenis; // handy for debugging / programmatic scroll
 window.gsap = gsap;
 window.ScrollTrigger = ScrollTrigger;
@@ -247,7 +247,7 @@ function buildHero() {
     scrollTrigger: {
       trigger: "#hero",
       start: "top top",
-      end: "+=380%",
+      end: "+=260%",
       pin: ".hero__stage",
       scrub: 1,
       anticipatePin: 1,
@@ -318,7 +318,7 @@ function buildPillars() {
     scrollTrigger: {
       trigger: "#pillars",
       start: "top top",
-      end: "+=340%",
+      end: "+=240%",
       pin: ".pillars__stage",
       scrub: 0.5,
       anticipatePin: 1,
@@ -415,28 +415,87 @@ function buildFuture() {
 
 function buildWork() {
   const headingChars = splitChars(document.getElementById("workHeading"));
+  gsap.set(headingChars, { opacity: 0, yPercent: 45 });
+  gsap.to(headingChars, {
+    opacity: 1, yPercent: 0, duration: 1, stagger: 0.02, ease: "power2.out",
+    scrollTrigger: { trigger: "#work", start: "top 70%", once: true },
+  });
 
-  const tl = gsap.timeline({
+  attachVideoPlayback(document.getElementById("creatorVideo"), "#work");
+
+  // On phones the track is a native horizontal swipe strip — no pin/tween.
+  if (window.matchMedia("(max-width: 760px)").matches) return;
+
+  const track = document.getElementById("workTrack");
+  const cards = gsap.utils.toArray(".wcard", track);
+  const amount = () => Math.max(0, track.scrollWidth - window.innerWidth);
+
+  // Vertical scroll drives the track sideways (the Awwwards horizontal move).
+  const tween = gsap.to(track, {
+    x: () => -amount(),
+    ease: "none",
     scrollTrigger: {
       trigger: "#work",
       start: "top top",
-      end: "+=250%",
-      pin: ".work__stage",
-      scrub: 0.5,
+      end: () => "+=" + amount(),
+      pin: ".work__pin",
+      scrub: 0.6,
       anticipatePin: 1,
+      invalidateOnRefresh: true,
     },
-    defaults: { ease: "none" },
   });
 
-  gsap.set(headingChars, { opacity: 0, yPercent: 45 });
-  gsap.set(".card", { opacity: 0, y: 90 });
+  // Each card lifts in as it enters from the right (tied to horizontal motion).
+  cards.forEach((card) => {
+    gsap.from(card, {
+      opacity: 0, yPercent: 12, duration: 1, ease: "power2.out",
+      scrollTrigger: {
+        trigger: card, containerAnimation: tween,
+        start: "left 92%", toggleActions: "play none none reverse",
+      },
+    });
+  });
+}
 
-  // reveal fast in the first quarter of the pin, then hold
-  tl.to(headingChars, { opacity: 1, yPercent: 0, duration: 1, stagger: 0.018, ease: "power1.out" }, 0.1)
-    .to(".card", { opacity: 1, y: 0, duration: 1, stagger: 0.15, ease: "power1.out" }, 0.6)
-    .to({}, { duration: 4.2 }, 1.6); // hold pinned while user reads / hovers
+// Capabilities: hover a row → it expands and an emerald preview chip trails the
+// cursor showing that capability. Desktop only (rows are always open on touch).
+function buildCaps() {
+  const list = document.getElementById("capsList");
+  const preview = document.getElementById("capsPreview");
+  if (!list || !preview || window.matchMedia("(hover: none)").matches) return;
+  const numEl = preview.querySelector(".caps__preview-num");
+  const labelEl = preview.querySelector(".caps__preview-label");
+  const px = gsap.quickTo(preview, "x", { duration: 0.5, ease: "power3.out" });
+  const py = gsap.quickTo(preview, "y", { duration: 0.5, ease: "power3.out" });
 
-  attachVideoPlayback(document.getElementById("creatorVideo"), "#work");
+  list.addEventListener("pointermove", (e) => { px(e.clientX); py(e.clientY); });
+  list.querySelectorAll(".cap").forEach((cap) => {
+    cap.addEventListener("mouseenter", () => {
+      numEl.textContent = cap.dataset.num;
+      labelEl.textContent = cap.dataset.cap;
+      preview.classList.add("is-on");
+    });
+  });
+  list.addEventListener("mouseleave", () => preview.classList.remove("is-on"));
+}
+
+// Process = sticky stacking cards. Each card shrinks and dims as the next one
+// slides up over it, so they physically pile with depth.
+function buildProcess() {
+  const steps = gsap.utils.toArray("#processStack .pstep");
+  steps.forEach((step, i) => {
+    const inner = step.querySelector(".pstep__inner");
+    gsap.from(inner, { // opacity-only entrance (no transform — the scale tween owns transform)
+      opacity: 0, duration: 0.8, ease: "power2.out",
+      scrollTrigger: { trigger: step, start: "top 85%", once: true },
+    });
+    if (i < steps.length - 1) {
+      gsap.to(inner, {
+        scale: 0.9, filter: "brightness(0.5)", ease: "none",
+        scrollTrigger: { trigger: steps[i + 1], start: "top bottom", end: "top top", scrub: true },
+      });
+    }
+  });
 }
 
 function buildTrust() {
@@ -563,6 +622,89 @@ function buildMobileMenu() {
   });
 }
 
+// Side telemetry rail: filling bar + live %, one dot per section that lights up
+// when active and scrolls you there on click.
+function buildRail() {
+  const rail = document.getElementById("rail");
+  const fill = document.getElementById("railFill");
+  const pctEl = document.getElementById("railPct");
+  const dotsWrap = document.getElementById("railDots");
+  if (!rail) return;
+  const map = [
+    ["#hero", "Top"], ["#stats", "Numbers"], ["#pillars", "Pillars"], ["#future", "Future"],
+    ["#work", "Work"], ["#caps", "Capabilities"], ["#process", "Process"], ["#trust", "Reviews"],
+    ["#faq", "FAQ"], ["#finale", "Contact"],
+  ];
+  map.forEach(([sel, label]) => {
+    const sec = document.querySelector(sel);
+    if (!sec) return;
+    const dot = document.createElement("button");
+    dot.className = "rail__dot";
+    dot.setAttribute("data-label", label);
+    dot.setAttribute("aria-label", label);
+    dot.addEventListener("click", () => lenis.scrollTo(sel, { offset: 0, duration: 1.4 }));
+    dotsWrap.appendChild(dot);
+    ScrollTrigger.create({
+      trigger: sec, start: "top 50%", end: "bottom 50%",
+      onToggle: (self) => dot.classList.toggle("is-active", self.isActive),
+    });
+  });
+  lenis.on("scroll", ({ progress }) => {
+    fill.style.height = (progress * 100).toFixed(1) + "%";
+    pctEl.textContent = String(Math.round(progress * 100)).padStart(2, "0");
+  });
+}
+
+// Cursor parallax on the hero — the orbit and type drift on opposite axes so
+// the scene has depth even before you scroll.
+function buildHeroParallax() {
+  if (window.matchMedia("(hover: none)").matches) return;
+  const stage = document.querySelector(".hero__stage");
+  if (!stage) return;
+  gsap.set(canvas, { scale: 1.07 }); // headroom so the parallax never shows edges
+  const cX = gsap.quickTo(canvas, "x", { duration: 0.9, ease: "power3.out" });
+  const cY = gsap.quickTo(canvas, "y", { duration: 0.9, ease: "power3.out" });
+  const tX = gsap.quickTo(".hero__type", "x", { duration: 1.1, ease: "power3.out" });
+  const tY = gsap.quickTo(".hero__type", "y", { duration: 1.1, ease: "power3.out" });
+  stage.addEventListener("mousemove", (e) => {
+    const dx = e.clientX / window.innerWidth - 0.5;
+    const dy = e.clientY / window.innerHeight - 0.5;
+    cX(dx * 34); cY(dy * 22);
+    tX(dx * -20); tY(dy * -14);
+  });
+  stage.addEventListener("mouseleave", () => { cX(0); cY(0); tX(0); tY(0); });
+}
+
+// Soft section snap: when you coast to a stop NEAR a section boundary, settle
+// onto it. Deliberately only engages within a third of a screen of a boundary,
+// so stopping mid-orbit / mid-pin (far from any boundary) never yanks you.
+function buildSnap() {
+  const getPoints = () =>
+    gsap.utils.toArray("main > section, footer").map((s) => s.getBoundingClientRect().top + window.scrollY);
+  let points = getPoints();
+  ScrollTrigger.addEventListener("refresh", () => { points = getPoints(); });
+
+  let idle, snapping = false;
+  lenis.on("scroll", ({ velocity }) => {
+    if (snapping) return;
+    clearTimeout(idle);
+    idle = setTimeout(() => {
+      if (Math.abs(velocity) > 12) return;
+      const y = window.scrollY;
+      let nearest = null, dist = Infinity;
+      for (const p of points) { const d = Math.abs(p - y); if (d < dist) { dist = d; nearest = p; } }
+      const threshold = window.innerHeight * 0.28;
+      if (nearest != null && dist > window.innerHeight * 0.04 && dist < threshold) {
+        snapping = true;
+        lenis.scrollTo(nearest, {
+          duration: 0.55, easing: (t) => 1 - Math.pow(1 - t, 3),
+          onComplete: () => { snapping = false; },
+        });
+      }
+    }, 150);
+  });
+}
+
 // Nav link highlights the section currently in view.
 function buildNavState() {
   document.querySelectorAll("[data-nav]").forEach((link) => {
@@ -597,7 +739,7 @@ function buildCursor() {
 
   // context labels
   document.querySelector(".hero__stage")?.setAttribute("data-cursor", "SCAN");
-  document.querySelectorAll(".card").forEach((c) => c.setAttribute("data-cursor", "VIEW"));
+  document.querySelectorAll(".wcard").forEach((c) => c.setAttribute("data-cursor", "VIEW"));
 
   const dx = gsap.quickTo(dot, "x", { duration: 0.08, ease: "power2.out" });
   const dy = gsap.quickTo(dot, "y", { duration: 0.08, ease: "power2.out" });
@@ -650,10 +792,11 @@ function buildScramble() {
   });
 }
 
-// 3D tilt — work cards and process cores lean toward the cursor.
+// 3D tilt — process cores lean toward the cursor (work cards translate
+// horizontally, so tilting them would fight the gallery motion).
 function buildTilt() {
   if (window.matchMedia("(hover: none)").matches) return;
-  document.querySelectorAll(".card, .pstep__inner").forEach((el) => {
+  document.querySelectorAll(".pstep__inner").forEach((el) => {
     const rX = gsap.quickTo(el, "rotationX", { duration: 0.45, ease: "power2.out" });
     const rY = gsap.quickTo(el, "rotationY", { duration: 0.45, ease: "power2.out" });
     const lift = gsap.quickTo(el, "y", { duration: 0.45, ease: "power2.out" });
@@ -713,6 +856,8 @@ preloadFrames((p) => {
     buildPillars();
     buildFuture();
     buildWork();
+    buildCaps();
+    buildProcess();
     buildTrust();
     buildFinale();
     buildTwall();
@@ -720,6 +865,9 @@ preloadFrames((p) => {
     buildFaq();
     buildMagnetic();
     buildNavState();
+    buildSnap();
+    buildRail();
+    buildHeroParallax();
     buildMobileMenu();
     buildCursor();
     buildScramble();
