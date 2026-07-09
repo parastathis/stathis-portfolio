@@ -4,5 +4,6 @@ dist/
 *.log
 .vite/
 
-# scratch / backups
+# scratch / backups / non-bundled media regeneration sources
 public/media/hero-face-backup.mp4
+_media-sources/

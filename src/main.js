@@ -22,8 +22,9 @@ lenis.on("scroll", ({ progress }) => {
 gsap.ticker.add((time) => lenis.raf(time * 1000));
 gsap.ticker.lagSmoothing(0);
 
-// anchor links through lenis
-document.querySelectorAll('a[href^="#"]').forEach((a) => {
+// anchor links through lenis (the mobile menu binds its own — exclude it here
+// so a tap doesn't fire two competing scrollTo tweens)
+document.querySelectorAll('a[href^="#"]:not(.mmenu a)').forEach((a) => {
   a.addEventListener("click", (e) => {
     const id = a.getAttribute("href");
     if (id.length > 1 && document.querySelector(id)) {
@@ -117,34 +118,46 @@ async function loadSequence(dir, store) {
   return manifest.count;
 }
 
+const CAN_HOVER = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+function loadImages(store, count, onEach) {
+  const { dir, pad, ext } = store.meta;
+  return Promise.all(Array.from({ length: count }, (_, i) => new Promise((resolve) => {
+    const img = new Image();
+    img.onload = img.onerror = () => { onEach && onEach(); resolve(); };
+    img.src = `${dir}/frame_${String(i + 1).padStart(pad, "0")}.${ext}`;
+    store[i] = img;
+  })));
+}
+
+// Block the loader on the FACE sequence only — that's the default visible orbit.
+// (Previously it blocked on BOTH 193-frame sequences = ~2GB decoded, a
+// mobile-crash-class footprint and a slow first paint.)
 async function preloadFrames(onProgress) {
-  frameCount = await loadSequence("/media/hero", helmetFrames);
   faceCount = await loadSequence("/media/hero-face", faceFrames);
-  const total = frameCount + faceCount;
-  if (!total) { onProgress(1); return; }
-  let loaded = 0;
+  if (faceCount) {
+    let n = 0;
+    await loadImages(faceFrames, faceCount, () => onProgress(++n / faceCount));
+    return;
+  }
+  // no face sequence available → fall back to the helmet sequence as the base
+  frameCount = await loadSequence("/media/hero", helmetFrames);
+  if (!frameCount) { onProgress(1); return; }
+  let n = 0;
+  await loadImages(helmetFrames, frameCount, () => onProgress(++n / frameCount));
+}
 
-  const loadInto = (store, count) =>
-    Array.from({ length: count }, (_, i) => new Promise((resolve) => {
-      const { dir, pad, ext } = store.meta;
-      const img = new Image();
-      img.onload = img.onerror = () => {
-        loaded++;
-        onProgress(loaded / total);
-        resolve();
-      };
-      img.src = `${dir}/frame_${String(i + 1).padStart(pad, "0")}.${ext}`;
-      store[i] = img;
-    }));
-
-  await Promise.all([
-    ...loadInto(helmetFrames, frameCount),
-    ...(faceCount ? loadInto(faceFrames, faceCount) : []),
-  ]);
+// The helmet sequence only feeds the desktop hover-lens overlay — load it AFTER
+// the site is interactive, and never on touch (no hover = it can't be revealed).
+async function loadHelmetFrames() {
+  if (!CAN_HOVER || frameCount) return;
+  frameCount = await loadSequence("/media/hero", helmetFrames);
+  if (frameCount) await loadImages(helmetFrames, frameCount);
 }
 
 function initLens() {
-  if (!faceCount) return;
+  // lens reveals the helmet overlay on hover — desktop only, needs both seqs
+  if (!CAN_HOVER || !faceCount) return;
   const stage = document.querySelector(".hero__stage");
   stage.style.cursor = "crosshair";
 
@@ -195,31 +208,30 @@ function splitChars(el) {
    ──────────────────────────────────────────── */
 const playbackVideos = [];
 
-// Background clips play continuously and NEVER pause on scroll. Scroll
-// interactivity comes from transforms (zoom / cinematic push-in), applied
-// separately in each scene — playback itself is left running smoothly.
+// A clip plays a full viewport BEFORE its section arrives and keeps playing
+// until a full viewport AFTER it leaves — so it's always already running when
+// you look at it (no on-scroll stutter), but distant sections stop decoding.
+// Without this, all 5 clips decode simultaneously forever = the main lag.
 function attachVideoPlayback(video, trigger) {
   if (!video) { console.warn("attachVideoPlayback: missing video for", trigger); return; }
   video.muted = true;
   video.loop = true;
   const st = ScrollTrigger.create({
     trigger,
-    start: "top bottom",
-    end: "bottom top",
-    onEnter: () => video.play().catch(() => {}),
-    onEnterBack: () => video.play().catch(() => {}),
+    start: "top bottom+=100%",
+    end: "bottom top-=100%",
+    onToggle: (self) => { self.isActive ? video.play().catch(() => {}) : video.pause(); },
   });
-  video.play().catch(() => {});
   playbackVideos.push({ video, st });
 }
 
-// Watchdog: if the browser aborts a clip while it's on/near screen, resume it.
+// Watchdog: if the browser aborts a near-screen clip, resume it (throttled).
 let watchdogAt = 0;
 gsap.ticker.add((time) => {
   if (time - watchdogAt < 1) return;
   watchdogAt = time;
   for (const { video, st } of playbackVideos) {
-    if (video.paused && st.isActive) video.play().catch(() => {});
+    if (st.isActive && video.paused) video.play().catch(() => {});
   }
 });
 
@@ -247,9 +259,11 @@ function buildHero() {
     defaults: { ease: "none" },
   });
 
-  // frame scrub runs across the whole pin
-  if (frameCount > 1) {
-    tl.to(playhead, { frame: frameCount - 1, duration: 10 }, 0);
+  // frame scrub runs across the whole pin (base = face seq; helmet lazy-loads
+  // for the lens but is the same length, so either count drives the range)
+  const seqLen = faceCount || frameCount;
+  if (seqLen > 1) {
+    tl.to(playhead, { frame: seqLen - 1, duration: 10 }, 0);
   }
 
   // name tracks in letter-by-letter over the first third of the orbit
@@ -354,18 +368,28 @@ function buildFuture() {
   vidA.addEventListener("ended", () => handoff(vidB));
   vidB.addEventListener("ended", () => handoff(vidA));
 
-  // Keep the sequence alive without pausing on scroll: whenever the front clip
-  // is unexpectedly paused (browser abort / first user gesture), resume it.
+  // Play the sequence only while #future is within ~a viewport (start it early,
+  // stop it once well past) so the two clips aren't decoding off-screen. `near`
+  // gates the resume watchdog so it never fights the pause.
+  let near = false;
   ScrollTrigger.create({
     trigger: "#future",
-    start: "top bottom",
-    end: "bottom top",
-    onEnter: () => front.play().catch(() => {}),
-    onEnterBack: () => front.play().catch(() => {}),
+    start: "top bottom+=100%",
+    end: "bottom top-=100%",
+    onToggle: (self) => {
+      near = self.isActive;
+      if (near) front.play().catch(() => {});
+      else { vidA.pause(); vidB.pause(); }
+    },
   });
-  // resume only genuine stalls — never a clip that just ended (that must hand off)
-  gsap.ticker.add(() => { if (front.paused && !front.ended) front.play().catch(() => {}); });
-  vidA.play().catch(() => {});
+  // resume genuine stalls only (throttled) — never a clip that just ended
+  // (that must hand off) and never while off-screen.
+  let jarvisWatch = 0;
+  gsap.ticker.add((t) => {
+    if (t - jarvisWatch < 1) return;
+    jarvisWatch = t;
+    if (near && front.paused && !front.ended) front.play().catch(() => {});
+  });
 
   const words = gsap.utils.toArray(".future__quote .word");
 
@@ -644,11 +668,16 @@ function buildTilt() {
 }
 
 // Marquees skew with scroll velocity — type leans into the speed.
+// Only writes when the target actually changes, so an idle page does zero work.
 function buildMarqueeReact() {
   const skews = gsap.utils.toArray(".marquee").map((m) =>
     gsap.quickTo(m, "skewX", { duration: 0.4, ease: "power2.out" }));
+  if (!skews.length) return;
+  let last = 999;
   gsap.ticker.add(() => {
     const s = gsap.utils.clamp(-9, 9, (lenis.velocity || 0) * 0.09);
+    if (Math.abs(s - last) < 0.05) return; // idle / unchanged → skip
+    last = s;
     skews.forEach((set) => set(s));
   });
 }
@@ -698,10 +727,17 @@ preloadFrames((p) => {
     buildMarqueeReact();
     ScrollTrigger.refresh();
 
-    // Self-correct if the hero booted at 0 size (e.g. hidden/backgrounded tab).
-    const stage = document.querySelector(".hero__stage");
-    const ro = new ResizeObserver(() => { sizeCanvas(); ScrollTrigger.refresh(); });
-    ro.observe(stage);
+    // Now that the site is interactive, lazily fetch the helmet lens frames
+    // (desktop only) — off the critical path, so first paint isn't blocked.
+    loadHelmetFrames();
+
+    // Keep the hero canvas crisp on resize. CRITICAL: observe the NON-pinned
+    // parent and NEVER call ScrollTrigger.refresh() here — observing the pinned
+    // stage + refreshing feeds back into ScrollTrigger's own pin box changes and
+    // makes pin-spacers grow without bound. ScrollTrigger handles resize itself.
+    const ro = new ResizeObserver(() => sizeCanvas());
+    ro.observe(document.querySelector(".hero"));
+    // One-shot pin recompute when a tab that booted hidden becomes visible.
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) { sizeCanvas(); ScrollTrigger.refresh(); renderFrame(); }
     });
