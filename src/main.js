@@ -198,6 +198,7 @@ let rateTarget = 1;
 let rateCurrent = 1;
 
 function attachVideoPlayback(video, trigger) {
+  if (!video) { console.warn("attachVideoPlayback: missing video for", trigger); return; }
   video.loop = true;
   video.muted = true;
   const st = ScrollTrigger.create({
@@ -343,6 +344,19 @@ function buildPillars() {
 }
 
 function buildFuture() {
+  // two jarvis clips crossfade back and forth while the section is on screen
+  const vidA = document.getElementById("jarvisVideoA");
+  const vidB = document.getElementById("jarvisVideoB");
+  attachVideoPlayback(vidA, "#future");
+  attachVideoPlayback(vidB, "#future");
+  gsap.set(vidB, { autoAlpha: 0 });
+  let showingB = false;
+  setInterval(() => {
+    showingB = !showingB;
+    gsap.to(vidA, { autoAlpha: showingB ? 0 : 1, duration: 1.4, ease: "power2.inOut" });
+    gsap.to(vidB, { autoAlpha: showingB ? 1 : 0, duration: 1.4, ease: "power2.inOut" });
+  }, 3600);
+
   const words = gsap.utils.toArray(".future__quote .word");
 
   const tl = gsap.timeline({
@@ -363,8 +377,6 @@ function buildFuture() {
   tl.to(words, { opacity: 1, yPercent: 0, duration: 1.1, stagger: 0.08, ease: "power1.out" }, 0.2)
     .to(".future__attrib", { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.5)
     .to({}, { duration: 3.6 }, 2.2); // hold with jarvis running
-
-  attachVideoPlayback(document.getElementById("jarvisVideo"), "#future");
 }
 
 function buildWork() {
@@ -441,22 +453,39 @@ preloadFrames((p) => {
 }).then(() => {
   sizeCanvas();
   window.addEventListener("resize", sizeCanvas);
-  initLens();
 
-  buildHero();
-  buildStats();
-  buildPillars();
-  buildFuture();
-  buildWork();
-  buildTrust();
-  buildFinale();
-  ScrollTrigger.refresh();
+  // Dismiss the loader FIRST, independent of scene building, so a bug in any
+  // build step can never leave the full-screen overlay covering the page.
+  // CSS-transition + setTimeout driven (not the rAF ticker), so it clears even
+  // in a backgrounded tab where GSAP/rAF is paused.
+  setTimeout(() => {
+    loader.classList.add("is-hidden");
+    setTimeout(() => loader.remove(), 950);
+  }, 300);
 
-  gsap.to(loader, {
-    yPercent: -100,
-    duration: 0.9,
-    ease: "power3.inOut",
-    delay: 0.25,
-    onComplete: () => loader.remove(),
-  });
+  try {
+    initLens();
+    buildHero();
+    buildStats();
+    buildPillars();
+    buildFuture();
+    buildWork();
+    buildTrust();
+    buildFinale();
+    ScrollTrigger.refresh();
+
+    // Self-correct if the hero booted at 0 size (e.g. hidden/backgrounded tab).
+    const stage = document.querySelector(".hero__stage");
+    const ro = new ResizeObserver(() => { sizeCanvas(); ScrollTrigger.refresh(); });
+    ro.observe(stage);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) { sizeCanvas(); ScrollTrigger.refresh(); renderFrame(); }
+    });
+  } catch (err) {
+    console.error("Scene build failed:", err);
+  }
+}).catch((err) => {
+  console.error("Boot failed:", err);
+  loader.classList.add("is-hidden");
+  setTimeout(() => loader.remove(), 950);
 });
