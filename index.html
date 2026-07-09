@@ -30,13 +30,31 @@
   <header class="nav">
     <a class="nav__logo" href="#hero">EP<span class="nav__dot">.</span></a>
     <nav class="nav__links">
-      <a href="#stats">Numbers</a>
-      <a href="#pillars">Pillars</a>
-      <a href="#work">Work</a>
-      <a href="#finale">Contact</a>
+      <a href="#stats" data-nav>Numbers</a>
+      <a href="#pillars" data-nav>Pillars</a>
+      <a href="#work" data-nav>Work</a>
+      <a href="#process" data-nav>Process</a>
+      <a href="#faq" data-nav>FAQ</a>
     </nav>
-    <a class="nav__cta" href="#finale"><span class="nav__pulse"></span>Available for projects</a>
+    <a class="nav__cta magnetic" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27d%20like%20to%20work%20together." target="_blank" rel="noopener"><span class="nav__pulse"></span>Available for projects</a>
+    <button class="nav__burger" id="navBurger" aria-label="Open menu" aria-expanded="false"><span></span><span></span></button>
   </header>
+
+  <!-- MOBILE MENU -->
+  <div class="mmenu" id="mobileMenu" aria-hidden="true">
+    <nav class="mmenu__links">
+      <a href="#stats"><span class="mmenu__idx">01</span> Numbers</a>
+      <a href="#pillars"><span class="mmenu__idx">02</span> Pillars</a>
+      <a href="#work"><span class="mmenu__idx">03</span> Work</a>
+      <a href="#process"><span class="mmenu__idx">04</span> Process</a>
+      <a href="#trust"><span class="mmenu__idx">05</span> Reviews</a>
+      <a href="#faq"><span class="mmenu__idx">06</span> FAQ</a>
+    </nav>
+    <div class="mmenu__foot">
+      <a class="btn btn--primary" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27m%20interested%20in%20your%20mentorship." target="_blank" rel="noopener">Join the Mentorship <span class="btn__icon">↗</span></a>
+      <a class="mmenu__yt" href="https://www.youtube.com/@spzero2hero" target="_blank" rel="noopener">Watch @spzero2hero on YouTube ↗</a>
+    </div>
+  </div>
 
   <main>
     <!-- ═══ 01 · HERO ORBIT ═══ -->
@@ -97,6 +115,26 @@
       </div>
     </section>
 
+    <!-- ═══ PLATFORM TRUST BAND ═══ -->
+    <section class="logos reveal" id="logos" aria-label="Platforms operated daily">
+      <p class="logos__eyebrow">Operating every day across</p>
+      <div class="logos__row">
+        <span class="logos__item">Meta Ads</span>
+        <span class="logos__dot">•</span>
+        <span class="logos__item">Shopify</span>
+        <span class="logos__dot">•</span>
+        <span class="logos__item">YouTube</span>
+        <span class="logos__dot">•</span>
+        <span class="logos__item">Google Ads</span>
+        <span class="logos__dot">•</span>
+        <span class="logos__item">TikTok</span>
+        <span class="logos__dot">•</span>
+        <span class="logos__item">Klaviyo</span>
+        <span class="logos__dot">•</span>
+        <span class="logos__item">Stripe</span>
+      </div>
+    </section>
+
     <!-- ═══ MARQUEE ═══ -->
     <div class="marquee" aria-hidden="true">
       <div class="marquee__track">
@@ -147,8 +185,8 @@
     <!-- ═══ 04 · THE FUTURE (jarvis) ═══ -->
     <section class="future" id="future">
       <div class="future__stage">
-        <video class="bgvideo bgvideo--fade" id="jarvisVideoA" src="/media/jarvis-a.mp4" muted playsinline preload="auto" loop></video>
-        <video class="bgvideo bgvideo--fade" id="jarvisVideoB" src="/media/jarvis-b.mp4" muted playsinline preload="auto" loop></video>
+        <video class="bgvideo jarvis-clip" id="jarvisVideoA" src="/media/jarvis-a.mp4" muted playsinline preload="auto" loop autoplay></video>
+        <video class="bgvideo jarvis-clip" id="jarvisVideoB" src="/media/jarvis-b.mp4" muted playsinline preload="auto" loop autoplay></video>
         <div class="stage-shade"></div>
         <p class="section-label section-label--overlay"><span class="section-label__num">04</span> THE FUTURE</p>
         <div class="future__content">
@@ -192,25 +230,109 @@
       </div>
     </section>
 
-    <!-- ═══ 06 · TRUST ═══ -->
+    <!-- ═══ 06 · PROCESS ═══ -->
+    <section class="process" id="process">
+      <div class="process__head reveal">
+        <span class="eyebrow"><span class="eyebrow__dot"></span> How it works</span>
+        <h2 class="process__title">A system, <em>not</em> a guess.</h2>
+        <p class="process__lead">Every engagement runs the same disciplined path — from forensic teardown to profitable scale. No hopium, no vague promises.</p>
+      </div>
+      <div class="process__grid">
+        <article class="pstep reveal">
+          <div class="pstep__inner">
+            <span class="pstep__num">01</span>
+            <h3 class="pstep__title">Audit</h3>
+            <p class="pstep__body">A forensic teardown of your store, funnel and ad account. We find exactly what's leaking money before spending another cent.</p>
+          </div>
+        </article>
+        <article class="pstep reveal">
+          <div class="pstep__inner">
+            <span class="pstep__num">02</span>
+            <h3 class="pstep__title">Strategy</h3>
+            <p class="pstep__body">A clear, creative-first plan — offers, angles, funnel and account structure mapped to your margins and goals.</p>
+          </div>
+        </article>
+        <article class="pstep reveal">
+          <div class="pstep__inner">
+            <span class="pstep__num">03</span>
+            <h3 class="pstep__title">Build &amp; Launch</h3>
+            <p class="pstep__body">Custom storefront, tracking and campaigns shipped and live. Clean code, fast load, and creatives built to convert.</p>
+          </div>
+        </article>
+        <article class="pstep reveal">
+          <div class="pstep__inner">
+            <span class="pstep__num">04</span>
+            <h3 class="pstep__title">Scale</h3>
+            <p class="pstep__body">Ruthless testing, budget scaling and iteration — pushing ROAS up while protecting profit, week after week.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ═══ 07 · TRUST ═══ -->
     <section class="trust" id="trust">
-      <p class="section-label"><span class="section-label__num">06</span> DON'T TAKE MY WORD FOR IT</p>
-      <div class="trust__grid">
-        <figure class="tcard">
-          <div class="tcard__stars">★★★★★</div>
-          <blockquote class="tcard__quote">"Went from zero to my first profitable month in nine weeks. The ad account structure alone was worth the whole program."</blockquote>
-          <figcaption class="tcard__who">Nikos K. <span>— Mentorship student, e-shop owner</span></figcaption>
-        </figure>
-        <figure class="tcard">
-          <div class="tcard__stars">★★★★★</div>
-          <blockquote class="tcard__quote">"His Meta Ads restructure took our ROAS from 1.8 to 6.4 in two months. Same budget, same products — completely different business."</blockquote>
-          <figcaption class="tcard__who">D2C Brand Founder <span>— Scaling client</span></figcaption>
-        </figure>
-        <figure class="tcard">
-          <div class="tcard__stars">★★★★★</div>
-          <blockquote class="tcard__quote">"The custom storefront he built loads instantly and converts more than double our old theme. Best investment we made this year."</blockquote>
-          <figcaption class="tcard__who">Boutique Brand, Athens <span>— Web development client</span></figcaption>
-        </figure>
+      <p class="section-label"><span class="section-label__num">07</span> DON'T TAKE MY WORD FOR IT</p>
+      <div class="trust__head reveal">
+        <h2 class="trust__title">A wall of <em>receipts.</em></h2>
+      </div>
+      <div class="twall reveal" id="twall">
+        <div class="twall__col" style="--dur: 38s">
+          <div class="twall__track">
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"Went from zero to my first profitable month in nine weeks. The ad account structure alone was worth the whole program."</blockquote>
+              <figcaption class="tcard__who">Nikos K. <span>— Mentorship student, e-shop owner</span></figcaption>
+            </figure>
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"The audit alone found three leaks that were eating a fifth of our budget. All three fixed inside a week."</blockquote>
+              <figcaption class="tcard__who">Supplement Brand Owner <span>— Audit client</span></figcaption>
+            </figure>
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"He treats your budget like it's his own money. Rare in this industry — and it shows in the numbers."</blockquote>
+              <figcaption class="tcard__who">Skincare Founder <span>— Meta Ads client</span></figcaption>
+            </figure>
+          </div>
+        </div>
+        <div class="twall__col twall__col--rev" style="--dur: 46s">
+          <div class="twall__track">
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"His Meta Ads restructure took our ROAS from 1.8 to 6.4 in two months. Same budget, same products — completely different business."</blockquote>
+              <figcaption class="tcard__who">D2C Brand Founder <span>— Scaling client</span></figcaption>
+            </figure>
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"Clear, brutal, honest feedback. He rebuilt my creative testing system and my CPAs dropped by a third."</blockquote>
+              <figcaption class="tcard__who">Marios T. <span>— Dropshipper turned brand owner</span></figcaption>
+            </figure>
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"I watched the videos for a year. The mentorship is ten times that — direct answers, zero fluff, real playbooks."</blockquote>
+              <figcaption class="tcard__who">Mentorship Student <span>— Cohort '25</span></figcaption>
+            </figure>
+          </div>
+        </div>
+        <div class="twall__col" style="--dur: 42s">
+          <div class="twall__track">
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"The custom storefront he built loads instantly and converts more than double our old theme. Best investment we made this year."</blockquote>
+              <figcaption class="tcard__who">Boutique Brand, Athens <span>— Web development client</span></figcaption>
+            </figure>
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"Our new build hit a 96 Lighthouse score and mobile conversion nearly doubled. The code is spotless."</blockquote>
+              <figcaption class="tcard__who">Fashion E-shop <span>— Thessaloniki</span></figcaption>
+            </figure>
+            <figure class="tcard">
+              <div class="tcard__stars">★★★★★</div>
+              <blockquote class="tcard__quote">"The systems he sets up just run. Reporting, creative pipeline, scaling rules — operator discipline end to end."</blockquote>
+              <figcaption class="tcard__who">Agency Partner <span>— Performance team lead</span></figcaption>
+            </figure>
+          </div>
+        </div>
       </div>
       <div class="trust__badges">
         <span class="badge"><i>✓</i> 7-figure ad spend managed</span>
@@ -220,7 +342,52 @@
       </div>
     </section>
 
-    <!-- ═══ 07 · FINALE (over clip 4) ═══ -->
+    <!-- ═══ 08 · FAQ ═══ -->
+    <section class="faq" id="faq">
+      <div class="faq__head reveal">
+        <span class="eyebrow"><span class="eyebrow__dot"></span> Questions</span>
+        <h2 class="faq__title">Everything you're<br />wondering.</h2>
+      </div>
+      <div class="faq__list">
+        <div class="faq__item reveal">
+          <button class="faq__q" type="button" aria-expanded="false">
+            <span>Who do you actually work with?</span>
+            <span class="faq__icon" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a"><p>E-commerce brands ready to scale with Meta Ads, founders who want a custom high-converting storefront, and driven people who want mentorship to build their own e-com and media business.</p></div>
+        </div>
+        <div class="faq__item reveal">
+          <button class="faq__q" type="button" aria-expanded="false">
+            <span>What kind of results should I expect?</span>
+            <span class="faq__icon" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a"><p>It depends on your margins, offer and starting point — but the goal is always the same: profitable, sustainable growth. No guarantees of overnight riches, just a proven system applied relentlessly.</p></div>
+        </div>
+        <div class="faq__item reveal">
+          <button class="faq__q" type="button" aria-expanded="false">
+            <span>Do you build the store, or just run ads?</span>
+            <span class="faq__icon" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a"><p>Both. I develop custom e-shops in clean code and run the Meta Ads that scale them — so the storefront and the traffic are engineered to work together, not against each other.</p></div>
+        </div>
+        <div class="faq__item reveal">
+          <button class="faq__q" type="button" aria-expanded="false">
+            <span>How does the mentorship work?</span>
+            <span class="faq__icon" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a"><p>Structured programs plus direct guidance — taking you step by step from your first store and ad account to consistent, profitable results, with the same playbooks I use on client work.</p></div>
+        </div>
+        <div class="faq__item reveal">
+          <button class="faq__q" type="button" aria-expanded="false">
+            <span>How do I get started?</span>
+            <span class="faq__icon" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a"><p>Hit the button below to join the mentorship, or reach out about a project. Tell me where you are now and where you want to be — and we'll map the fastest honest path there.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ 09 · FINALE (over clip 4) ═══ -->
     <section class="finale" id="finale">
       <div class="finale__stage">
         <video class="bgvideo" id="closerVideo" src="/media/closer.mp4" muted playsinline preload="auto"></video>
@@ -231,8 +398,8 @@
             <span class="finale__word">for</span> <span class="finale__word">your</span> <span class="finale__word finale__word--accent">business?</span>
           </h2>
           <div class="finale__ctas" id="finaleCtas">
-            <a class="btn btn--primary" href="#" rel="noopener">Join the Mentorship</a>
-            <a class="btn btn--ghost" href="https://www.youtube.com" target="_blank" rel="noopener">Watch on YouTube</a>
+            <a class="btn btn--primary magnetic" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27m%20interested%20in%20your%20mentorship." target="_blank" rel="noopener">Join the Mentorship <span class="btn__icon">↗</span></a>
+            <a class="btn btn--ghost magnetic" href="https://www.youtube.com/@spzero2hero" target="_blank" rel="noopener">Watch @spzero2hero <span class="btn__icon">▶</span></a>
           </div>
         </div>
       </div>
@@ -246,8 +413,8 @@
       <div class="footer__cols">
         <div class="footer__col">
           <span class="footer__col-label">Channels</span>
-          <a href="https://www.youtube.com" target="_blank" rel="noopener">YouTube ↗</a>
-          <a href="#" rel="noopener">Mentorship ↗</a>
+          <a href="https://www.youtube.com/@spzero2hero" target="_blank" rel="noopener">YouTube @spzero2hero ↗</a>
+          <a href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27m%20interested%20in%20your%20mentorship." target="_blank" rel="noopener">Mentorship (WhatsApp) ↗</a>
         </div>
         <div class="footer__col">
           <span class="footer__col-label">Code</span>
