@@ -420,6 +420,62 @@
       </div>
     </section>
 
+    <!-- ═══ 06B · ROAS CALCULATOR ═══ -->
+    <section class="calc" id="calc">
+      <div class="calc__head reveal">
+        <span class="eyebrow"><span class="eyebrow__dot"></span> Run your numbers</span>
+        <h2 class="calc__title">What are your ads <em>really</em> worth?</h2>
+        <p class="calc__lead">Drag the sliders to your store's numbers. Then see what the same spend does once the funnel is dialed in.</p>
+      </div>
+      <div class="calc__panel reveal" id="calcPanel">
+        <span class="hud__corner hud__corner--tl"></span>
+        <span class="hud__corner hud__corner--tr"></span>
+        <span class="hud__corner hud__corner--bl"></span>
+        <span class="hud__corner hud__corner--br"></span>
+        <div class="calc__inputs">
+          <label class="calc__row">
+            <span class="calc__label">Monthly ad spend</span>
+            <input type="range" id="calcSpend" min="500" max="60000" step="250" value="5000" />
+            <span class="calc__val" id="calcSpendVal">€5,000</span>
+          </label>
+          <label class="calc__row">
+            <span class="calc__label">Avg. cost per click</span>
+            <input type="range" id="calcCpc" min="0.3" max="2.5" step="0.05" value="0.8" />
+            <span class="calc__val" id="calcCpcVal">€0.80</span>
+          </label>
+          <label class="calc__row">
+            <span class="calc__label">Avg. order value</span>
+            <input type="range" id="calcAov" min="15" max="250" step="5" value="60" />
+            <span class="calc__val" id="calcAovVal">€60</span>
+          </label>
+          <label class="calc__row">
+            <span class="calc__label">Site conversion rate</span>
+            <input type="range" id="calcCvr" min="0.4" max="5" step="0.1" value="2.2" />
+            <span class="calc__val" id="calcCvrVal">2.2%</span>
+          </label>
+        </div>
+        <div class="calc__outputs">
+          <div class="calc__out">
+            <span class="calc__out-num" id="calcRoas">0.0×</span>
+            <span class="calc__out-key">Blended ROAS</span>
+          </div>
+          <div class="calc__out">
+            <span class="calc__out-num" id="calcRev">€0</span>
+            <span class="calc__out-key">Monthly revenue</span>
+          </div>
+          <div class="calc__out">
+            <span class="calc__out-num" id="calcOrders">0</span>
+            <span class="calc__out-key">Orders / month</span>
+          </div>
+        </div>
+        <div class="calc__uplift" id="calcUplift">
+          <span class="calc__uplift-dot"></span>
+          <span>With a dialed-in funnel (CVR ×1.6 after CRO): <strong id="calcUpliftVal">+€0 / month</strong> on the same spend.</span>
+        </div>
+        <p class="calc__fine">Illustrative model — your margins, offer and creative decide the real number. That's what the audit is for.</p>
+      </div>
+    </section>
+
     <!-- ═══ 07 · TRUST ═══ -->
     <section class="trust" id="trust">
       <p class="section-label"><span class="section-label__num">07</span> DON'T TAKE MY WORD FOR IT</p>
@@ -556,12 +612,71 @@
           <div class="finale__ctas" id="finaleCtas">
             <a class="btn btn--primary magnetic" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27m%20interested%20in%20your%20mentorship." target="_blank" rel="noopener">Join the Mentorship <span class="btn__icon">↗</span></a>
             <a class="btn btn--ghost magnetic" href="https://www.youtube.com/@spzero2hero" target="_blank" rel="noopener">Watch @spzero2hero <span class="btn__icon">▶</span></a>
+            <button class="btn btn--ghost magnetic" id="auditOpen" type="button">Free store audit <span class="btn__icon">⚡</span></button>
             <p class="finale__trust"><span class="finale__trust-dot"></span>Replies personally — usually within 24 hours. No sales team.</p>
           </div>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- AUDIT REQUEST MODAL -->
+  <div class="modal" id="auditModal" role="dialog" aria-modal="true" aria-labelledby="auditTitle" aria-hidden="true">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card">
+      <span class="hud__corner hud__corner--tl"></span>
+      <span class="hud__corner hud__corner--tr"></span>
+      <span class="hud__corner hud__corner--bl"></span>
+      <span class="hud__corner hud__corner--br"></span>
+      <button class="modal__close" type="button" data-modal-close aria-label="Close">✕</button>
+      <p class="modal__eyebrow">// FREE AUDIT REQUEST</p>
+      <h3 class="modal__title" id="auditTitle">Where is your store <em>leaking?</em></h3>
+      <p class="modal__lead">Three fields. I'll look personally and reply on WhatsApp with what I'd fix first — no charge, no pitch deck.</p>
+      <form id="auditForm">
+        <label class="field">
+          <span class="field__label">Your store URL</span>
+          <input class="field__input" id="auditUrl" type="text" inputmode="url" placeholder="mystore.com" required />
+        </label>
+        <label class="field">
+          <span class="field__label">Monthly ad spend</span>
+          <select class="field__input" id="auditSpend">
+            <option>Not running ads yet</option>
+            <option>Under €1,000</option>
+            <option>€1,000 – €5,000</option>
+            <option>€5,000 – €20,000</option>
+            <option>€20,000+</option>
+          </select>
+        </label>
+        <label class="field">
+          <span class="field__label">Biggest problem right now</span>
+          <textarea class="field__input field__input--area" id="auditProblem" rows="3" placeholder="ROAS dropped since March, CPAs keep climbing…"></textarea>
+        </label>
+        <button class="btn btn--primary modal__submit" type="submit">Send via WhatsApp <span class="btn__icon">↗</span></button>
+        <p class="modal__fine">Opens WhatsApp with your details pre-filled — nothing is sent until you hit send there.</p>
+      </form>
+    </div>
+  </div>
+
+  <!-- CASE STUDY OVERLAY -->
+  <div class="modal modal--case" id="caseModal" role="dialog" aria-modal="true" aria-labelledby="caseTitle" aria-hidden="true">
+    <div class="modal__backdrop" data-modal-close></div>
+    <div class="modal__card modal__card--case">
+      <span class="hud__corner hud__corner--tl"></span>
+      <span class="hud__corner hud__corner--tr"></span>
+      <span class="hud__corner hud__corner--bl"></span>
+      <span class="hud__corner hud__corner--br"></span>
+      <button class="modal__close" type="button" data-modal-close aria-label="Close">✕</button>
+      <p class="modal__eyebrow" id="caseTag">// CASE FILE</p>
+      <h3 class="modal__title" id="caseTitle"></h3>
+      <p class="modal__lead" id="caseStory"></p>
+      <div class="case__stats" id="caseStats"></div>
+      <div class="case__chart">
+        <svg id="caseChart" viewBox="0 0 560 180" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <p class="case__chart-label" id="caseChartLabel"></p>
+      </div>
+      <button class="btn btn--primary modal__submit" id="caseCta" type="button">Map this onto your store <span class="btn__icon">→</span></button>
+    </div>
+  </div>
 
   <!-- STICKY MOBILE CTA DOCK (the nav CTA is hidden on phones) -->
   <a class="dock" id="ctaDock" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27d%20like%20to%20work%20together." target="_blank" rel="noopener" aria-label="Chat on WhatsApp">

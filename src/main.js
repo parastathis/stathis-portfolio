@@ -25,8 +25,9 @@ gsap.ticker.add((time) => lenis.raf(time * 1000));
 gsap.ticker.lagSmoothing(0);
 
 // anchor links through lenis (the mobile menu binds its own — exclude it here
-// so a tap doesn't fire two competing scrollTo tweens)
-document.querySelectorAll('a[href^="#"]:not(.mmenu a)').forEach((a) => {
+// so a tap doesn't fire two competing scrollTo tweens; work cards open case
+// overlays instead of scrolling)
+document.querySelectorAll('a[href^="#"]:not(.mmenu a):not(.wcard)').forEach((a) => {
   a.addEventListener("click", (e) => {
     const id = a.getAttribute("href");
     if (id.length > 1 && document.querySelector(id)) {
@@ -762,8 +763,8 @@ function buildRail() {
   if (!rail) return;
   const map = [
     ["#hero", "Top"], ["#stats", "Numbers"], ["#pillars", "Pillars"], ["#future", "Future"],
-    ["#work", "Work"], ["#caps", "Capabilities"], ["#process", "Process"], ["#trust", "Reviews"],
-    ["#faq", "FAQ"], ["#finale", "Contact"],
+    ["#work", "Work"], ["#caps", "Capabilities"], ["#process", "Process"], ["#calc", "Calculator"],
+    ["#trust", "Reviews"], ["#faq", "FAQ"], ["#finale", "Contact"],
   ];
   map.forEach(([sel, label]) => {
     const sec = document.querySelector(sel);
@@ -942,6 +943,190 @@ function buildTilt() {
   });
 }
 
+/* ────────────────────────────────────────────
+   MODALS · CALCULATOR · CASE FILES
+   ──────────────────────────────────────────── */
+// Shared modal open/close: emerald card lifts in, page scroll locks, ESC and
+// backdrop close, focus lands on the close button and returns on exit.
+let lastFocus = null;
+function openModal(modal) {
+  lastFocus = document.activeElement;
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  lenis.stop();
+  gsap.fromTo(modal.querySelector(".modal__card"),
+    { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "power3.out" });
+  modal.querySelector(".modal__close").focus();
+}
+function closeModal(modal) {
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  lenis.start();
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function wireModal(modal) {
+  modal.querySelectorAll("[data-modal-close]").forEach((el) =>
+    el.addEventListener("click", () => closeModal(modal)));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("is-open")) closeModal(modal);
+  });
+}
+
+// ROAS calculator — sliders in, animated telemetry out. Simple honest model:
+// visits = spend/CPC, orders = visits×CVR, revenue = orders×AOV.
+function buildCalc() {
+  const $ = (id) => document.getElementById(id);
+  const panel = $("calcPanel");
+  if (!panel) return;
+  const inputs = { spend: $("calcSpend"), cpc: $("calcCpc"), aov: $("calcAov"), cvr: $("calcCvr") };
+  const labels = { spend: $("calcSpendVal"), cpc: $("calcCpcVal"), aov: $("calcAovVal"), cvr: $("calcCvrVal") };
+  const outs = { roas: $("calcRoas"), rev: $("calcRev"), orders: $("calcOrders"), uplift: $("calcUpliftVal") };
+  const eur = (n) => "€" + Math.round(n).toLocaleString("en-US");
+  const shown = { roas: 0, rev: 0, orders: 0, uplift: 0 };
+
+  const compute = (animate = true) => {
+    const spend = +inputs.spend.value, cpc = +inputs.cpc.value;
+    const aov = +inputs.aov.value, cvr = +inputs.cvr.value / 100;
+    labels.spend.textContent = eur(spend);
+    labels.cpc.textContent = "€" + cpc.toFixed(2);
+    labels.aov.textContent = eur(aov);
+    labels.cvr.textContent = (cvr * 100).toFixed(1) + "%";
+    const orders = (spend / cpc) * cvr;
+    const rev = orders * aov;
+    const target = { roas: rev / spend, rev, orders, uplift: rev * 0.6 };
+    gsap.to(shown, {
+      ...target, duration: animate ? 0.7 : 0, ease: "power2.out", overwrite: true,
+      onUpdate: () => {
+        outs.roas.textContent = shown.roas.toFixed(1) + "×";
+        outs.rev.textContent = eur(shown.rev);
+        outs.orders.textContent = Math.round(shown.orders).toLocaleString("en-US");
+        outs.uplift.textContent = "+" + eur(shown.uplift) + " / month";
+      },
+    });
+  };
+  Object.values(inputs).forEach((el) => el.addEventListener("input", () => compute()));
+  // first paint of the numbers happens when the panel scrolls in — feels alive
+  ScrollTrigger.create({ trigger: panel, start: "top 80%", once: true, onEnter: () => compute() });
+}
+
+// Audit request form — builds a structured WhatsApp message. Nothing sends
+// until the visitor hits send inside WhatsApp itself.
+function buildAudit() {
+  const modal = document.getElementById("auditModal");
+  if (!modal) return;
+  wireModal(modal);
+  document.getElementById("auditOpen")?.addEventListener("click", () => openModal(modal));
+  // the "Your brand is next" work card opens the form too (href stays as a
+  // no-JS fallback straight to WhatsApp)
+  document.querySelector(".wcard--cta")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    openModal(modal);
+  });
+  document.getElementById("auditForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const url = document.getElementById("auditUrl").value.trim();
+    const spend = document.getElementById("auditSpend").value;
+    const problem = document.getElementById("auditProblem").value.trim();
+    const msg = `Hi Stathis — free audit request.\nStore: ${url}\nMonthly ad spend: ${spend}\nBiggest problem: ${problem || "—"}`;
+    window.open("https://wa.me/306940985821?text=" + encodeURIComponent(msg), "_blank", "noopener");
+    closeModal(modal);
+  });
+}
+
+// Case files — each work card opens a cinematic overlay with the story,
+// three stats and an animated emerald chart.
+const CASES = [
+  {
+    tag: "// CASE FILE 01 · E-COMMERCE · META ADS",
+    title: "Scaled DTC Brands",
+    story: "A skincare store stuck at break-even: solid product, leaky funnel, creative fatigue. Full account restructure, creative-first testing and disciplined budget laddering — same products, same budget, completely different business.",
+    stats: [["6.4×", "peak ROAS"], ["1.8×", "starting ROAS"], ["8wk", "to turnaround"]],
+    chart: [1.8, 2.1, 2.6, 3.4, 4.3, 5.2, 6.0, 6.4],
+    chartLabel: "Blended ROAS — weekly, during restructure",
+  },
+  {
+    tag: "// CASE FILE 02 · MENTORSHIP",
+    title: "Student Success Stories",
+    story: "From zero store and zero ad account to a consistent, profitable operation — with the exact playbooks I run on client work. Structured program, direct answers, no fluff.",
+    stats: [["9wk", "to first profit"], ["150+", "mentored"], ["4.9/5", "avg rating"]],
+    chart: [-320, -180, -60, 90, 260, 520, 860, 1300, 1900],
+    chartLabel: "Student net profit / week (€) — first 9 weeks",
+  },
+  {
+    tag: "// CASE FILE 03 · WEB DEVELOPMENT",
+    title: "Custom E-shops",
+    story: "Theme bloat kills conversion quietly. Custom storefronts in clean, fast code: instant loads, friction-free checkout, engineered for the ads that feed them.",
+    stats: [["96", "Lighthouse score"], ["0.9s", "LCP"], ["2.1×", "mobile CVR"]],
+    chart: [54, 58, 61, 72, 88, 96],
+    chartLabel: "Lighthouse performance — rebuild milestones",
+  },
+  {
+    tag: "// CASE FILE 04 · CREATIVE STRATEGY",
+    title: "Ad Testing Systems",
+    story: "Winners aren't guessed, they're manufactured: a structured testing pipeline that finds hooks fast and kills losers faster — CPA falls while margin stays protected.",
+    stats: [["-34%", "avg CPA"], ["12/wk", "creatives tested"], ["1 in 9", "hit rate"]],
+    chart: [24.5, 23.1, 21.2, 19.4, 17.8, 16.6, 16.2],
+    chartLabel: "Cost per acquisition (€) — weekly, system live",
+  },
+  {
+    tag: "// CASE FILE 05 · YOUTUBE AUTOMATION",
+    title: "Faceless Channels",
+    story: "Content engines that run without a face on camera: niche selection, retention-first scripting and a production pipeline that compounds views into millions of subscribers.",
+    stats: [["5M+", "subs reached"], ["100%", "faceless"], ["24/7", "output"]],
+    chart: [2, 6, 15, 34, 70, 130, 210, 320],
+    chartLabel: "Cumulative subscribers (×10k) — channel network",
+  },
+];
+
+function buildCases() {
+  const modal = document.getElementById("caseModal");
+  if (!modal) return;
+  wireModal(modal);
+  const svg = document.getElementById("caseChart");
+
+  const drawChart = (data) => {
+    const W = 560, H = 180, P = 14;
+    const min = Math.min(...data), max = Math.max(...data);
+    const px = (i) => P + (i / (data.length - 1)) * (W - 2 * P);
+    const py = (v) => H - P - ((v - min) / (max - min || 1)) * (H - 2 * P);
+    const pts = data.map((v, i) => `${px(i)},${py(v)}`).join(" ");
+    svg.innerHTML = `
+      <polygon points="${P},${H - P} ${pts} ${W - P},${H - P}" fill="rgba(16,223,143,0.08)"/>
+      <polyline id="caseLine" points="${pts}" fill="none" stroke="#10df8f" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${data.map((v, i) => `<circle cx="${px(i)}" cy="${py(v)}" r="3.2" fill="#10df8f"/>`).join("")}`;
+    const line = svg.querySelector("#caseLine");
+    const len = line.getTotalLength();
+    gsap.fromTo(line, { strokeDasharray: len, strokeDashoffset: len },
+      { strokeDashoffset: 0, duration: 1.2, ease: "power2.out", delay: 0.25 });
+    gsap.fromTo(svg.querySelectorAll("circle"), { opacity: 0, scale: 0, transformOrigin: "center" },
+      { opacity: 1, scale: 1, duration: 0.4, stagger: 0.07, ease: "back.out(2)", delay: 0.5 });
+  };
+
+  const open = (c) => {
+    document.getElementById("caseTag").textContent = c.tag;
+    document.getElementById("caseTitle").textContent = c.title;
+    document.getElementById("caseStory").textContent = c.story;
+    document.getElementById("caseStats").innerHTML = c.stats.map(([num, key]) =>
+      `<div class="case__stat"><span class="case__stat-num">${num}</span><span class="case__stat-key">${key}</span></div>`).join("");
+    document.getElementById("caseChartLabel").textContent = c.chartLabel;
+    openModal(modal);
+    drawChart(c.chart);
+  };
+
+  document.querySelectorAll(".wcard:not(.wcard--cta)").forEach((card, i) => {
+    card.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (CASES[i]) open(CASES[i]);
+    });
+  });
+  // "map this onto your store" chains into the audit form
+  document.getElementById("caseCta").addEventListener("click", () => {
+    closeModal(modal);
+    const audit = document.getElementById("auditModal");
+    if (audit) setTimeout(() => openModal(audit), 120);
+  });
+}
+
 // Sticky mobile CTA dock — slides in once the hero is passed (the nav CTA is
 // display:none on phones, so without this a phone visitor has no conversion
 // path until the finale).
@@ -1031,6 +1216,9 @@ preloadFrames((p) => {
     buildMarqueeReact();
     buildDock();
     buildClock();
+    buildCalc();
+    buildAudit();
+    buildCases();
     ScrollTrigger.refresh();
 
     // Now that the site is interactive, lazily fetch the helmet lens frames
