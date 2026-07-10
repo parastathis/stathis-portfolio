@@ -475,15 +475,14 @@
     <section class="finale" id="finale">
       <div class="finale__stage">
         <video class="bgvideo" id="closerVideo" src="/media/closer.mp4" muted playsinline preload="metadata"></video>
-        <!-- Knockout: black matte + white heading, mix-blend multiply — the
-             walking clip shows ONLY through the letterforms, black around them,
-             so I appear to move inside the text. -->
+        <!-- Intact phase: black matte + white heading (mix-blend multiply) shows
+             the walking clip through the letterforms. On impact the letters
+             SHATTER into video-shards and the matte dissolves — I walk through. -->
         <div class="finale__knock">
-          <h2 class="finale__heading" id="finaleHeading">
-            <span class="finale__word">Want</span> <span class="finale__word">results</span> <span class="finale__word">like</span> <span class="finale__word">these</span>
-            <span class="finale__word">for</span> <span class="finale__word">your</span> <span class="finale__word">business?</span>
-          </h2>
+          <div class="finale__matte" id="finaleMatte"></div>
+          <h2 class="finale__heading" id="finaleHeading" aria-label="Want results like these for your business?">Want results like these for your business?</h2>
         </div>
+        <div class="finale__flash" id="finaleFlash" aria-hidden="true"></div>
         <div class="finale__content">
           <div class="finale__ctas" id="finaleCtas">
             <a class="btn btn--primary magnetic" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27m%20interested%20in%20your%20mentorship." target="_blank" rel="noopener">Join the Mentorship <span class="btn__icon">↗</span></a>

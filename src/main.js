@@ -506,30 +506,80 @@ function buildTrust() {
   });
 }
 
+// Split a heading into per-word, per-char spans (words stay unbroken; real
+// spaces preserved) so each letter can shatter independently.
+function splitHeadingChars(el) {
+  const words = el.textContent.trim().split(/\s+/);
+  el.textContent = "";
+  const chars = [];
+  words.forEach((word, wi) => {
+    const w = document.createElement("span");
+    w.className = "fword"; w.style.display = "inline-block";
+    [...word].forEach((ch) => {
+      const c = document.createElement("span");
+      c.className = "char"; c.textContent = ch;
+      w.appendChild(c); chars.push(c);
+    });
+    el.appendChild(w);
+    if (wi < words.length - 1) el.appendChild(document.createTextNode(" "));
+  });
+  return chars;
+}
+
 function buildFinale() {
+  const chars = splitHeadingChars(document.getElementById("finaleHeading"));
+  const matte = document.getElementById("finaleMatte");
+  const flash = document.getElementById("finaleFlash");
+  const n = chars.length;
+
+  // Per-letter shatter vector: left letters blast left, right letters right,
+  // with random spin/scale/vertical spread. Index-based so it doesn't depend on
+  // layout timing (the section is off-screen when this builds).
+  const shard = chars.map((_, i) => ({
+    x: (i / (n - 1) - 0.5) * gsap.utils.random(520, 900) + gsap.utils.random(-60, 60),
+    y: gsap.utils.random(-140, 380),
+    rot: gsap.utils.random(-170, 170),
+    scale: gsap.utils.random(0.2, 1.5),
+  }));
+
   const tl = gsap.timeline({
     scrollTrigger: {
-      trigger: "#finale",
-      start: "top top",
-      end: "+=250%",
-      pin: ".finale__stage",
-      scrub: 0.5,
-      anticipatePin: 1,
+      trigger: "#finale", start: "top top", end: "+=340%",
+      pin: ".finale__stage", scrub: 0.5, anticipatePin: 1,
     },
     defaults: { ease: "none" },
   });
 
-  gsap.set(".finale__word", { opacity: 0, yPercent: 50 });
-  gsap.set("#finaleCtas", { opacity: 0, y: 40 });
+  gsap.set("#closerVideo", { transformOrigin: "50% 42%" });
+  gsap.set("#finaleCtas", { opacity: 0, y: 30 });
 
-  // "THE CLOSER" clip pushes in cinematically as he walks toward camera and
-  // lands his hero pose — the frame tightens on him across the whole pin.
-  gsap.set("#closerVideo", { transformOrigin: "50% 40%" });
-  tl.fromTo("#closerVideo", { scale: 1.08 }, { scale: 1.28, duration: 6.5, ease: "none" }, 0);
+  // He walks toward camera across the whole sequence.
+  tl.fromTo("#closerVideo", { scale: 1.04 }, { scale: 1.32, duration: 10, ease: "none" }, 0);
 
-  tl.to(".finale__word", { opacity: 1, yPercent: 0, duration: 1.1, stagger: 0.07, ease: "power1.out" }, 0.2)
-    .to("#finaleCtas", { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" }, 1.2)
-    .to({}, { duration: 4 }, 2); // hold on the hero pose while screens flare
+  // Tension: the whole heading trembles as he closes in (scale-only, so it never
+  // fights the shatter's x/y tweens).
+  tl.to("#finaleHeading", {
+    keyframes: { scale: [1, 1.012, 0.994, 1.008, 1] },
+    duration: 1.2, ease: "sine.inOut", transformOrigin: "50% 50%",
+  }, 2.0);
+
+  // IMPACT — white/emerald flash.
+  tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out" }, 3.3)
+    .to(flash, { opacity: 0, duration: 0.9, ease: "power2.in" }, 3.5);
+
+  // SHATTER — letters explode outward from centre into video-shards…
+  tl.to(chars, {
+    x: (i) => shard[i].x, y: (i) => shard[i].y,
+    rotation: (i) => shard[i].rot, scale: (i) => shard[i].scale,
+    opacity: 0, filter: "blur(7px)", duration: 1.8, ease: "power2.in",
+    stagger: { each: 0.018, from: "center" },
+  }, 3.35);
+  // …and the black matte dissolves so the full walking clip is revealed.
+  tl.to(matte, { opacity: 0, duration: 1.9, ease: "power2.inOut" }, 3.6);
+
+  // I walk through into full frame; the CTAs rise.
+  tl.to("#finaleCtas", { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, 6.2)
+    .to({}, { duration: 2 }, 7.2);
 
   attachVideoPlayback(document.getElementById("closerVideo"), "#finale");
 }

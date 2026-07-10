@@ -605,20 +605,28 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
   position: relative; height: 100vh; overflow: hidden; background: var(--ink);
   isolation: isolate; /* contain the multiply blend to this section */
 }
-/* Black matte with white heading. multiply → black stays black (hides video),
-   white letters pass the video through. Result: I walk inside the words. */
+/* Knockout group: matte (black) + white heading, multiply over the video.
+   Matte dissolves and letters shatter on impact to reveal the full clip. */
 .finale__knock {
   position: absolute; inset: 0; z-index: 2;
-  background: #000; mix-blend-mode: multiply;
+  mix-blend-mode: multiply;
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 0 5vw clamp(90px, 16vh, 150px);
 }
+.finale__matte { position: absolute; inset: 0; background: #000; }
 .finale__heading {
+  position: relative; z-index: 1;
   font-family: var(--display); font-weight: 400;
   font-size: clamp(52px, 9vw, 160px); line-height: 0.94; color: #fff;
   max-width: 1200px; letter-spacing: 0.01em;
 }
-.finale__word { display: inline-block; color: #fff; }
+.finale__heading .char { display: inline-block; color: #fff; will-change: transform, opacity, filter; }
+/* white impact flash */
+.finale__flash {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(circle at 50% 55%, rgba(255,255,255,0.95), rgba(16,223,143,0.4) 40%, transparent 70%);
+  opacity: 0; mix-blend-mode: screen;
+}
 /* subtle emerald glow ring so the section doesn't read as flat black */
 .finale__stage::after {
   content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
