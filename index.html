@@ -3,11 +3,78 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Efstathios Paraskevopoulos — Meta Ads & E-commerce</title>
-  <meta name="description" content="Efstathios Paraskevopoulos — Meta Ads & E-commerce GOAT. E-shop Developer. Creator, mentor, developer." />
+  <title>Efstathios Paraskevopoulos — Meta Ads &amp; E-commerce Expert, E-shop Developer</title>
+  <meta name="description" content="Meta Ads scaling, custom high-converting e-shops and 1:1 mentorship. Efstathios Paraskevopoulos takes e-commerce brands from break-even to profitable scale — creator of @spzero2hero." />
+  <meta name="author" content="Efstathios Paraskevopoulos" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#060806" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Social cards. NOTE: og:url + og:image should become absolute URLs
+       (https://yourdomain.com/…) once the production domain is live. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Efstathios Paraskevopoulos" />
+  <meta property="og:title" content="Efstathios Paraskevopoulos — Meta Ads & E-commerce Expert" />
+  <meta property="og:description" content="Meta Ads scaling, custom high-converting e-shops and 1:1 mentorship. From break-even to profitable scale." />
+  <meta property="og:image" content="/media/hero-face/frame_0001.jpg" />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Efstathios Paraskevopoulos — Meta Ads & E-commerce Expert" />
+  <meta name="twitter:description" content="Meta Ads scaling, custom e-shops and 1:1 mentorship. From break-even to profitable scale." />
+  <meta name="twitter:image" content="/media/hero-face/frame_0001.jpg" />
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="preload" as="image" href="/media/hero-face/frame_0001.jpg" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "@id": "#stathis",
+        "name": "Efstathios Paraskevopoulos",
+        "jobTitle": "Meta Ads & E-commerce Specialist, E-shop Developer",
+        "description": "Meta Ads buyer, custom e-commerce developer, YouTube creator and mentor.",
+        "address": { "@type": "PostalAddress", "addressLocality": "Athens", "addressCountry": "GR" },
+        "sameAs": ["https://www.youtube.com/@spzero2hero"],
+        "knowsAbout": ["Meta Ads", "E-commerce", "Conversion Rate Optimization", "Shopify", "Web Development", "YouTube Automation"]
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Who do you actually work with?",
+            "acceptedAnswer": { "@type": "Answer", "text": "E-commerce brands ready to scale with Meta Ads, founders who want a custom high-converting storefront, and driven people who want mentorship to build their own e-com and media business." }
+          },
+          {
+            "@type": "Question",
+            "name": "What kind of results should I expect?",
+            "acceptedAnswer": { "@type": "Answer", "text": "It depends on your margins, offer and starting point — but the goal is always the same: profitable, sustainable growth. No guarantees of overnight riches, just a proven system applied relentlessly." }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you build the store, or just run ads?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Both. I develop custom e-shops in clean code and run the Meta Ads that scale them — so the storefront and the traffic are engineered to work together, not against each other." }
+          },
+          {
+            "@type": "Question",
+            "name": "How does the mentorship work?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Structured programs plus direct guidance — taking you step by step from your first store and ad account to consistent, profitable results, with the same playbooks I use on client work." }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I get started?",
+            "acceptedAnswer": { "@type": "Answer", "text": "Join the mentorship or reach out about a project. Tell me where you are now and where you want to be — and we'll map the fastest honest path there." }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -84,7 +151,7 @@
           <div class="hero__scrollline"></div>
         </div>
 
-        <div class="hero__meta hero__meta--left" id="heroMetaL">EST. ATHENS, GR</div>
+        <div class="hero__meta hero__meta--left" id="heroMetaL">EST. ATHENS, GR · <span id="heroClock">--:--:--</span> LOCAL</div>
         <div class="hero__meta hero__meta--right" id="heroMetaR">ORBIT <span id="orbitDeg">000</span>°</div>
 
         <div class="hero__hud" aria-hidden="true" id="heroHud">
@@ -475,11 +542,13 @@
     <section class="finale" id="finale">
       <div class="finale__stage">
         <video class="bgvideo" id="closerVideo" src="/media/closer.mp4" muted playsinline preload="metadata"></video>
-        <!-- Intact phase: black matte + white heading (mix-blend multiply) shows
-             the walking clip through the letterforms. On impact the letters
-             SHATTER into video-shards and the matte dissolves — I walk through. -->
+        <!-- Intact phase: a canvas cover (black with letter-shaped holes punched
+             out) shows the walking clip through the letterforms. Canvas composites
+             normally on every platform — mix-blend-mode over a hardware-decoded
+             video layer renders solid black on Windows. On impact the cover fades
+             under the flash and the span heading SHATTERS into glowing shards. -->
+        <canvas class="finale__mask" id="finaleMask" aria-hidden="true"></canvas>
         <div class="finale__knock">
-          <div class="finale__matte" id="finaleMatte"></div>
           <h2 class="finale__heading" id="finaleHeading" aria-label="Want results like these for your business?">Want results like these for your business?</h2>
         </div>
         <div class="finale__flash" id="finaleFlash" aria-hidden="true"></div>
@@ -487,11 +556,17 @@
           <div class="finale__ctas" id="finaleCtas">
             <a class="btn btn--primary magnetic" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27m%20interested%20in%20your%20mentorship." target="_blank" rel="noopener">Join the Mentorship <span class="btn__icon">↗</span></a>
             <a class="btn btn--ghost magnetic" href="https://www.youtube.com/@spzero2hero" target="_blank" rel="noopener">Watch @spzero2hero <span class="btn__icon">▶</span></a>
+            <p class="finale__trust"><span class="finale__trust-dot"></span>Replies personally — usually within 24 hours. No sales team.</p>
           </div>
         </div>
       </div>
     </section>
   </main>
+
+  <!-- STICKY MOBILE CTA DOCK (the nav CTA is hidden on phones) -->
+  <a class="dock" id="ctaDock" href="https://wa.me/306940985821?text=Hi%20Stathis%2C%20I%27d%20like%20to%20work%20together." target="_blank" rel="noopener" aria-label="Chat on WhatsApp">
+    <span class="dock__pulse"></span>Available — let's talk
+  </a>
 
   <!-- FOOTER -->
   <footer class="footer">

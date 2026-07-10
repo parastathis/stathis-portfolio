@@ -210,40 +210,46 @@ function splitChars(el) {
    ──────────────────────────────────────────── */
 const playbackVideos = [];
 
-// Videos NEVER stop while you scroll. Each clip starts playing well before its
-// section arrives and simply keeps looping — it is only paused when the whole
-// tab is hidden (battery). A clip a couple of screens away still plays, so you
-// never catch one frozen. (Short muted clips; native mobile scroll keeps the
-// main thread free.)
+// A clip plays whenever it is within ±1.5 viewports of the screen — far enough
+// out that it is always already running when it scrolls into view, close
+// enough in that only ~1-2 clips decode at once (5 concurrent decodes make
+// constrained devices force-pause videos themselves, sometimes the visible
+// one). Recovery from a browser-initiated pause is instant: a `pause` listener
+// plus a 0.3s watchdog re-play any in-range clip. Neither is gated on
+// document.hidden — embedded preview panes report hidden while still
+// rendering, and Chrome pauses muted loops there; the old hidden-gate is what
+// let clips freeze permanently mid-scroll.
 function attachVideoPlayback(video, trigger) {
   if (!video) { console.warn("attachVideoPlayback: missing video for", trigger); return; }
   video.muted = true;
   video.loop = true;
   const st = ScrollTrigger.create({
     trigger,
-    start: "top bottom+=200%",
-    end: "bottom top-=200%",
-    onEnter: () => video.play().catch(() => {}),
-    onEnterBack: () => video.play().catch(() => {}),
-    // no pause on leave — playback continues across the whole scroll
+    start: "top bottom+=150%",
+    end: "bottom top-=150%",
+    onToggle: (self) => {
+      if (self.isActive) video.play().catch(() => {});
+      else video.pause();
+    },
   });
-  video.play().catch(() => {});
+  // browser paused it (power saving, loop boundary in a hidden pane, decoder
+  // pressure)? — if it should be playing, start it right back up.
+  video.addEventListener("pause", () => {
+    if (st.isActive) setTimeout(() => { if (st.isActive && video.paused) video.play().catch(() => {}); }, 60);
+  });
+  if (st.isActive) video.play().catch(() => {});
   playbackVideos.push({ video, st });
 }
 
-// Keep every clip alive: if the browser ever aborts one while the tab is
-// visible, resume it (throttled). Pause all only when the tab goes hidden.
+// Belt-and-braces resume for in-range clips (covers rejected play() promises
+// that the pause listener never sees). Deliberately NOT gated on
+// document.hidden — see note above.
 let watchdogAt = 0;
 gsap.ticker.add((time) => {
-  if (document.hidden || time - watchdogAt < 1) return;
+  if (time - watchdogAt < 0.3) return;
   watchdogAt = time;
-  for (const { video } of playbackVideos) {
-    if (video.paused) video.play().catch(() => {});
-  }
-});
-document.addEventListener("visibilitychange", () => {
-  for (const { video } of playbackVideos) {
-    document.hidden ? video.pause() : video.play().catch(() => {});
+  for (const { video, st } of playbackVideos) {
+    if (st.isActive && video.paused) video.play().catch(() => {});
   }
 });
 
@@ -398,7 +404,7 @@ function buildFuture() {
   // (that must hand off) and never while off-screen.
   let jarvisWatch = 0;
   gsap.ticker.add((t) => {
-    if (t - jarvisWatch < 1) return;
+    if (t - jarvisWatch < 0.35) return;
     jarvisWatch = t;
     if (near && front.paused && !front.ended) front.play().catch(() => {});
   });
@@ -539,10 +545,56 @@ function splitHeadingChars(el) {
 }
 
 function buildFinale() {
-  const chars = splitHeadingChars(document.getElementById("finaleHeading"));
-  const matte = document.getElementById("finaleMatte");
+  const heading = document.getElementById("finaleHeading");
+  const chars = splitHeadingChars(heading);
+  const knock = document.querySelector(".finale__knock");
+  const stage = document.querySelector(".finale__stage");
+  const mask = document.getElementById("finaleMask");
+  const mctx = mask.getContext("2d");
   const flash = document.getElementById("finaleFlash");
   const n = chars.length;
+
+  // Paint the intact knockout: black cover with the heading punched out
+  // (destination-out) plus a faint emerald glow around the glyphs. Words are
+  // drawn at the REAL rendered positions of the hidden span heading, so the
+  // canvas text and the shard spans line up when they swap at impact.
+  const drawMask = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (!w || !h) return;
+    mask.width = w * dpr; mask.height = h * dpr;
+    mctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mctx.fillStyle = "#020402";
+    mctx.fillRect(0, 0, w, h);
+    const stageBox = stage.getBoundingClientRect();
+    const fs = parseFloat(getComputedStyle(heading).fontSize);
+    mctx.font = `400 ${fs}px Anton, Impact, sans-serif`;
+    mctx.textBaseline = "top";
+    if ("letterSpacing" in mctx) mctx.letterSpacing = (0.01 * fs).toFixed(2) + "px";
+    heading.querySelectorAll(".fword").forEach((word) => {
+      const r = word.getBoundingClientRect();
+      const x = r.left - stageBox.left;
+      // center the em box inside the word's line box (line-height 0.94)
+      const y = r.top - stageBox.top + (r.height - fs) / 2;
+      mctx.save();
+      mctx.shadowColor = "rgba(16,223,143,0.55)";
+      mctx.shadowBlur = 24;
+      mctx.strokeStyle = "rgba(16,223,143,0.30)";
+      mctx.lineWidth = Math.max(1.2, fs * 0.012);
+      mctx.strokeText(word.textContent, x, y);
+      mctx.restore();
+      mctx.save();
+      mctx.globalCompositeOperation = "destination-out";
+      mctx.fillStyle = "#fff";
+      mctx.fillText(word.textContent, x, y);
+      mctx.restore();
+    });
+  };
+  drawMask();
+  // redraw once the display font is actually loaded, and on stage resize
+  // (observe the NON-pinned parent; draw only — never ScrollTrigger.refresh)
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawMask);
+  new ResizeObserver(drawMask).observe(document.querySelector(".finale"));
 
   // Per-letter shatter vector: left letters blast left, right letters right,
   // with random spin/scale/vertical spread. Index-based so it doesn't depend on
@@ -563,25 +615,38 @@ function buildFinale() {
 
   gsap.set("#closerVideo", { transformOrigin: "50% 42%" });
   gsap.set("#finaleCtas", { opacity: 0, y: 30 });
+  gsap.set(knock, { autoAlpha: 0 }); // shard layer waits for impact
+
+  // initial states at t0 so a rewind (re-entry from above) resets the scene
+  tl.set(mask, { opacity: 1, scale: 1 }, 0)
+    .set(knock, { autoAlpha: 0 }, 0)
+    .set(chars, { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, filter: "blur(0px)" }, 0);
+
+  // the clip is dark (avg luma ~32/255) — lift it while the cover is up so
+  // the letter-holes glow, then ease back to natural after the break
+  tl.fromTo("#closerVideo", { filter: "brightness(1.6) saturate(1.05)" },
+    { filter: "brightness(1) saturate(1)", duration: 1.4, ease: "power2.inOut" }, 2.3);
 
   // he walks toward camera / into the letters
   tl.fromTo("#closerVideo", { scale: 1.05 }, { scale: 1.26, duration: 4.2, ease: "power1.inOut" }, 0);
-  // tension tremble as he reaches the text
-  tl.to("#finaleHeading", { keyframes: { scale: [1, 1.012, 0.994, 1.008, 1] },
+  // tension tremble as he reaches the text (the whole cover shudders)
+  tl.to(mask, { keyframes: { scale: [1, 1.012, 0.994, 1.008, 1] },
     duration: 1.0, ease: "sine.inOut", transformOrigin: "50% 50%" }, 1.2);
   // IMPACT flash the moment his head reaches the letters
   tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, 2.05)
     .to(flash, { opacity: 0, duration: 0.8, ease: "power2.in" }, 2.25);
-  // letters shatter into video-shards
+  // under the flash: cover fades → full clip; shard heading takes over
+  tl.to(mask, { opacity: 0, duration: 0.5, ease: "power2.out" }, 2.12)
+    .set(knock, { autoAlpha: 1 }, 2.12);
+  // letters shatter into glowing shards
   tl.to(chars, {
     x: (i) => shard[i].x, y: (i) => shard[i].y,
     rotation: (i) => shard[i].rot, scale: (i) => shard[i].scale,
     opacity: 0, filter: "blur(7px)", duration: 1.4, ease: "power2.in",
     stagger: { each: 0.016, from: "center" },
   }, 2.15);
-  // matte dissolves → full walking clip; CTAs rise as I walk through
-  tl.to(matte, { opacity: 0, duration: 1.5, ease: "power2.inOut" }, 2.35)
-    .to("#finaleCtas", { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 3.7);
+  // CTAs rise as I walk through
+  tl.to("#finaleCtas", { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 3.7);
 
   // Reset the letters/matte so a re-entry can replay the break.
   const reset = () => { tl.pause(0); };
@@ -877,6 +942,30 @@ function buildTilt() {
   });
 }
 
+// Sticky mobile CTA dock — slides in once the hero is passed (the nav CTA is
+// display:none on phones, so without this a phone visitor has no conversion
+// path until the finale).
+function buildDock() {
+  const dock = document.getElementById("ctaDock");
+  if (!dock) return;
+  ScrollTrigger.create({
+    trigger: "#stats", start: "top 80%",
+    onToggle: (self) => dock.classList.toggle("is-in", self.isActive || self.progress > 0),
+  });
+}
+
+// Live Athens local time in the hero telemetry — ticks once a second.
+function buildClock() {
+  const el = document.getElementById("heroClock");
+  if (!el) return;
+  const fmt = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Athens", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  });
+  const tick = () => { el.textContent = fmt.format(new Date()); };
+  tick();
+  setInterval(tick, 1000);
+}
+
 // Marquees skew with scroll velocity — type leans into the speed.
 // Only writes when the target actually changes, so an idle page does zero work.
 function buildMarqueeReact() {
@@ -940,6 +1029,8 @@ preloadFrames((p) => {
     buildScramble();
     buildTilt();
     buildMarqueeReact();
+    buildDock();
+    buildClock();
     ScrollTrigger.refresh();
 
     // Now that the site is interactive, lazily fetch the helmet lens frames

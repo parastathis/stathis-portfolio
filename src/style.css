@@ -605,15 +605,19 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
   position: relative; height: 100vh; overflow: hidden; background: var(--ink);
   isolation: isolate; /* contain the multiply blend to this section */
 }
-/* Knockout group: matte (black) + white heading, multiply over the video.
-   Matte dissolves and letters shatter on impact to reveal the full clip. */
+/* Canvas cover: black with letter-shaped holes — the clip shows only through
+   the letterforms. Fades out on impact while the span heading shatters. */
+.finale__mask {
+  position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%;
+  will-change: transform, opacity;
+}
+/* Shard layer: same layout as the canvas heading; hidden until impact, then
+   its chars blast outward as glowing shards. No blend modes over the video. */
 .finale__knock {
-  position: absolute; inset: 0; z-index: 2;
-  mix-blend-mode: multiply;
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
   display: flex; align-items: center; justify-content: center;
   text-align: center; padding: 0 5vw clamp(90px, 16vh, 150px);
 }
-.finale__matte { position: absolute; inset: 0; background: #000; }
 .finale__heading {
   position: relative; z-index: 1;
   font-family: var(--display); font-weight: 400;
@@ -621,18 +625,20 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
   max-width: 1200px; letter-spacing: 0.01em;
 }
 .finale__heading .char { display: inline-block; color: #fff; will-change: transform, opacity, filter; }
-/* white impact flash */
+/* soft white halo: inside the multiply layer it lifts the video around each
+   glyph, so the letterforms stay legible even over near-black frames */
+.finale__heading .char { text-shadow: 0 0 30px rgba(255,255,255,0.5), 0 0 90px rgba(255,255,255,0.28); }
+/* white impact flash (plain compositing — blends fail over video layers) */
 .finale__flash {
   position: absolute; inset: 0; z-index: 3; pointer-events: none;
   background: radial-gradient(circle at 50% 55%, rgba(255,255,255,0.95), rgba(16,223,143,0.4) 40%, transparent 70%);
-  opacity: 0; mix-blend-mode: screen;
+  opacity: 0;
 }
 /* subtle emerald glow ring so the section doesn't read as flat black */
 .finale__stage::after {
   content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
   background: radial-gradient(120% 80% at 50% 60%, transparent 45%, rgba(6,8,6,0.6) 100%),
-              radial-gradient(80% 50% at 50% 55%, rgba(16,223,143,0.10), transparent 70%);
-  mix-blend-mode: screen;
+              radial-gradient(80% 50% at 50% 55%, rgba(16,223,143,0.08), transparent 70%);
 }
 .finale__content {
   position: absolute; inset: 0; z-index: 4;
@@ -983,6 +989,38 @@ body.has-cursor, body.has-cursor * { cursor: none !important; }
   /* the horizontal-gallery hint arrow is redundant on a native swipe strip */
   .work__hint { font-size: 10px; }
 }
+
+/* ── FINALE TRUST LINE ──────────────────── */
+.finale__trust {
+  flex-basis: 100%; margin-top: 14px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--cream-dim); text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.finale__trust-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--emerald);
+  box-shadow: 0 0 0 0 rgba(16,223,143,0.6); animation: pulse 2s infinite;
+}
+
+/* ── STICKY MOBILE CTA DOCK ─────────────── */
+.dock {
+  position: fixed; left: 50%; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 140%); z-index: 75;
+  display: none; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+  text-transform: uppercase; text-decoration: none;
+  color: var(--ink); background: var(--emerald);
+  padding: 14px 26px; border-radius: 100px; white-space: nowrap;
+  box-shadow: 0 10px 34px rgba(16,223,143,0.35), 0 2px 10px rgba(0,0,0,0.45);
+  transition: transform 0.55s cubic-bezier(0.32, 0.72, 0, 1);
+}
+.dock__pulse {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--ink);
+  box-shadow: 0 0 0 0 rgba(6,8,6,0.5); animation: pulse 2s infinite;
+}
+.dock.is-in { transform: translate(-50%, 0); }
+body.menu-open .dock { transform: translate(-50%, 140%); }
+@media (max-width: 760px) { .dock { display: inline-flex; } }
 
 /* respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {
