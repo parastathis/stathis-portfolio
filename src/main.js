@@ -8,7 +8,9 @@ gsap.registerPlugin(ScrollTrigger);
 /* ────────────────────────────────────────────
    LENIS ⇆ SCROLLTRIGGER
    ──────────────────────────────────────────── */
-const lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 1, touchMultiplier: 1.5, syncTouch: true });
+// Desktop: smooth wheel. Mobile: NATIVE touch scroll (syncTouch hijacks the
+// finger and feels laggy/broken on phones) — Lenis only smooths the wheel.
+const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1, smoothWheel: true, syncTouch: false });
 window.lenis = lenis; // handy for debugging / programmatic scroll
 window.gsap = gsap;
 window.ScrollTrigger = ScrollTrigger;
@@ -208,30 +210,40 @@ function splitChars(el) {
    ──────────────────────────────────────────── */
 const playbackVideos = [];
 
-// A clip plays a full viewport BEFORE its section arrives and keeps playing
-// until a full viewport AFTER it leaves — so it's always already running when
-// you look at it (no on-scroll stutter), but distant sections stop decoding.
-// Without this, all 5 clips decode simultaneously forever = the main lag.
+// Videos NEVER stop while you scroll. Each clip starts playing well before its
+// section arrives and simply keeps looping — it is only paused when the whole
+// tab is hidden (battery). A clip a couple of screens away still plays, so you
+// never catch one frozen. (Short muted clips; native mobile scroll keeps the
+// main thread free.)
 function attachVideoPlayback(video, trigger) {
   if (!video) { console.warn("attachVideoPlayback: missing video for", trigger); return; }
   video.muted = true;
   video.loop = true;
   const st = ScrollTrigger.create({
     trigger,
-    start: "top bottom+=100%",
-    end: "bottom top-=100%",
-    onToggle: (self) => { self.isActive ? video.play().catch(() => {}) : video.pause(); },
+    start: "top bottom+=200%",
+    end: "bottom top-=200%",
+    onEnter: () => video.play().catch(() => {}),
+    onEnterBack: () => video.play().catch(() => {}),
+    // no pause on leave — playback continues across the whole scroll
   });
+  video.play().catch(() => {});
   playbackVideos.push({ video, st });
 }
 
-// Watchdog: if the browser aborts a near-screen clip, resume it (throttled).
+// Keep every clip alive: if the browser ever aborts one while the tab is
+// visible, resume it (throttled). Pause all only when the tab goes hidden.
 let watchdogAt = 0;
 gsap.ticker.add((time) => {
-  if (time - watchdogAt < 1) return;
+  if (document.hidden || time - watchdogAt < 1) return;
   watchdogAt = time;
-  for (const { video, st } of playbackVideos) {
-    if (st.isActive && video.paused) video.play().catch(() => {});
+  for (const { video } of playbackVideos) {
+    if (video.paused) video.play().catch(() => {});
+  }
+});
+document.addEventListener("visibilitychange", () => {
+  for (const { video } of playbackVideos) {
+    document.hidden ? video.pause() : video.play().catch(() => {});
   }
 });
 
@@ -542,46 +554,49 @@ function buildFinale() {
     scale: gsap.utils.random(0.2, 1.5),
   }));
 
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: "#finale", start: "top top", end: "+=340%",
-      pin: ".finale__stage", scrub: 0.5, anticipatePin: 1,
-    },
-    defaults: { ease: "none" },
-  });
+  const closer = document.getElementById("closerVideo");
+
+  // The break AUTO-PLAYS, timed to the walk — no precise scrubbing needed.
+  // Real seconds: he walks up (0–2s), the letters break on "impact" (~2.1s),
+  // then I walk through and the CTAs rise. It restarts each time you arrive.
+  const tl = gsap.timeline({ paused: true, defaults: { ease: "none" } });
 
   gsap.set("#closerVideo", { transformOrigin: "50% 42%" });
   gsap.set("#finaleCtas", { opacity: 0, y: 30 });
 
-  // He walks toward camera across the whole sequence.
-  tl.fromTo("#closerVideo", { scale: 1.04 }, { scale: 1.32, duration: 10, ease: "none" }, 0);
-
-  // Tension: the whole heading trembles as he closes in (scale-only, so it never
-  // fights the shatter's x/y tweens).
-  tl.to("#finaleHeading", {
-    keyframes: { scale: [1, 1.012, 0.994, 1.008, 1] },
-    duration: 1.2, ease: "sine.inOut", transformOrigin: "50% 50%",
-  }, 2.0);
-
-  // IMPACT — white/emerald flash.
-  tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.18, ease: "power2.out" }, 3.3)
-    .to(flash, { opacity: 0, duration: 0.9, ease: "power2.in" }, 3.5);
-
-  // SHATTER — letters explode outward from centre into video-shards…
+  // he walks toward camera / into the letters
+  tl.fromTo("#closerVideo", { scale: 1.05 }, { scale: 1.26, duration: 4.2, ease: "power1.inOut" }, 0);
+  // tension tremble as he reaches the text
+  tl.to("#finaleHeading", { keyframes: { scale: [1, 1.012, 0.994, 1.008, 1] },
+    duration: 1.0, ease: "sine.inOut", transformOrigin: "50% 50%" }, 1.2);
+  // IMPACT flash the moment his head reaches the letters
+  tl.fromTo(flash, { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "power2.out" }, 2.05)
+    .to(flash, { opacity: 0, duration: 0.8, ease: "power2.in" }, 2.25);
+  // letters shatter into video-shards
   tl.to(chars, {
     x: (i) => shard[i].x, y: (i) => shard[i].y,
     rotation: (i) => shard[i].rot, scale: (i) => shard[i].scale,
-    opacity: 0, filter: "blur(7px)", duration: 1.8, ease: "power2.in",
-    stagger: { each: 0.018, from: "center" },
-  }, 3.35);
-  // …and the black matte dissolves so the full walking clip is revealed.
-  tl.to(matte, { opacity: 0, duration: 1.9, ease: "power2.inOut" }, 3.6);
+    opacity: 0, filter: "blur(7px)", duration: 1.4, ease: "power2.in",
+    stagger: { each: 0.016, from: "center" },
+  }, 2.15);
+  // matte dissolves → full walking clip; CTAs rise as I walk through
+  tl.to(matte, { opacity: 0, duration: 1.5, ease: "power2.inOut" }, 2.35)
+    .to("#finaleCtas", { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 3.7);
 
-  // I walk through into full frame; the CTAs rise.
-  tl.to("#finaleCtas", { opacity: 1, y: 0, duration: 1, ease: "power2.out" }, 6.2)
-    .to({}, { duration: 2 }, 7.2);
+  // Reset the letters/matte so a re-entry can replay the break.
+  const reset = () => { tl.pause(0); };
 
-  attachVideoPlayback(document.getElementById("closerVideo"), "#finale");
+  // Short pin holds the scene while the break plays itself out; entering the
+  // section restarts the walk (currentTime 0) and plays the sequence.
+  ScrollTrigger.create({
+    trigger: "#finale", start: "top top", end: "+=140%",
+    pin: ".finale__stage", anticipatePin: 1,
+    onEnter: () => { try { closer.currentTime = 0; } catch (e) {} closer.play().catch(() => {}); tl.restart(); },
+    onEnterBack: () => { tl.play(); },
+    onLeaveBack: reset,
+  });
+
+  attachVideoPlayback(closer, "#finale");
 }
 
 /* ────────────────────────────────────────────
@@ -729,6 +744,8 @@ function buildHeroParallax() {
 // onto it. Deliberately only engages within a third of a screen of a boundary,
 // so stopping mid-orbit / mid-pin (far from any boundary) never yanks you.
 function buildSnap() {
+  // native touch scroll on phones — no snapping (it fights the finger)
+  if (window.matchMedia("(hover: none)").matches) return;
   const getPoints = () =>
     gsap.utils.toArray("main > section, footer").map((s) => s.getBoundingClientRect().top + window.scrollY);
   let points = getPoints();

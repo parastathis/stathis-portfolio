@@ -971,6 +971,17 @@ body.has-cursor, body.has-cursor * { cursor: none !important; }
   /* the full-screen animated grain repaints the whole page every frame —
      hold it static on phones (keep the texture, drop the animation) */
   .grain { animation: none; opacity: 0.05; }
+
+  /* A phone only shows the centre strip of a 16:9 clip — bias each video so
+     its subject stays framed, and ease the crop so nobody is cut in half. */
+  .bgvideo { object-position: 50% 42%; }
+  #builderVideo { object-position: 34% 40%; }   /* main figure sits centre-left */
+  #creatorVideo { object-position: 50% 32%; }   /* talking head, keep it high    */
+  #closerVideo  { object-position: 50% 52%; }    /* walking figure, mid-frame     */
+  #jarvisVideoA, #jarvisVideoB { object-position: 50% 34%; } /* face + hands up   */
+
+  /* the horizontal-gallery hint arrow is redundant on a native swipe strip */
+  .work__hint { font-size: 10px; }
 }
 
 /* respect reduced-motion */
