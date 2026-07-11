@@ -237,9 +237,50 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
 /* the two clips that are transform-scaled across a whole pin — pin them to a
    compositor layer so the continuous scale doesn't trigger repaints */
 #builderVideo, #closerVideo { will-change: transform; }
-.jarvis-clip { transition: opacity 1.6s cubic-bezier(0.4, 0, 0.2, 1); }
-#jarvisVideoB { opacity: 0; }
-#jarvisVideoB.is-visible { opacity: 1; }
+/* ── COPILOT CINEMA (jarvis-b solo section) ──
+   Letterbox bars retract as the pin scrubs — the feed opens like a film
+   frame — under a broadcast HUD (REC timecode + feed tag). */
+.copilot { position: relative; }
+.copilot__stage {
+  position: relative; height: 100vh; overflow: hidden; background: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+}
+#jarvisVideoB { will-change: transform; } /* scale-scrubbed across the pin */
+.copilot__content { position: relative; z-index: 4; text-align: center; padding: 0 5vw; }
+.copilot__quote {
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(38px, 6.8vw, 118px); line-height: 1.04; color: var(--cream);
+  text-shadow: 0 8px 60px rgba(6,8,6,0.8);
+}
+.copilot__quote .word { display: inline-block; }
+.copilot__accent { color: transparent; -webkit-text-stroke: 2px var(--emerald); }
+.copilot__attrib {
+  margin-top: 3.5vh; font-family: var(--mono); font-size: 12px;
+  letter-spacing: 0.28em; text-transform: uppercase; color: var(--cream-dim);
+}
+.cine__bar {
+  position: absolute; left: 0; right: 0; height: 16vh; z-index: 3;
+  background: #020402; will-change: transform;
+}
+.cine__bar--top { top: 0; box-shadow: 0 1px 0 rgba(16,223,143,0.35); }
+.cine__bar--bot { bottom: 0; box-shadow: 0 -1px 0 rgba(16,223,143,0.35); }
+.cine__rec {
+  position: absolute; top: clamp(80px, 10vh, 120px); right: clamp(20px, 4vw, 56px);
+  z-index: 5; pointer-events: none; display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; color: var(--cream-dim);
+}
+.cine__rec i {
+  width: 8px; height: 8px; border-radius: 50%; background: #ff4545;
+  animation: rec-blink 1.2s steps(2, start) infinite;
+}
+@keyframes rec-blink { to { opacity: 0.15; } }
+.cine__tag {
+  position: absolute; bottom: clamp(24px, 5vh, 48px); left: clamp(20px, 4vw, 56px);
+  z-index: 5; pointer-events: none;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase;
+  color: var(--cream-dim); background: rgba(6,8,6,0.55);
+  padding: 8px 12px; border: 1px solid rgba(243,238,225,0.14); border-radius: 4px;
+}
 .stage-shade {
   position: absolute; inset: 0;
   background:
@@ -950,7 +991,7 @@ body.has-cursor, body.has-cursor * { cursor: none !important; }
    MOBILE-FIRST OVERRIDES
    ═══════════════════════════════════════════ */
 /* iOS-safe full-height for pinned stages (avoids URL-bar viewport jump) */
-.hero__stage, .pillars__stage, .future__stage, .work__stage, .finale__stage {
+.hero__stage, .pillars__stage, .future__stage, .copilot__stage, .work__stage, .finale__stage {
   height: 100svh; min-height: 100svh;
 }
 
@@ -1239,7 +1280,7 @@ body.menu-open .dock { transform: translate(-50%, 140%); }
 /* respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   .marquee__track, .twall__track, .grain,
-  .beam::before, .btn--primary::after,
+  .beam::before, .btn--primary::after, .cine__rec i,
   .nav__pulse, .dock__pulse, .stat__live-dot,
   .hero__scrollline::after, .work__hint-arrow, .hud__tag--hint { animation: none !important; }
   .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }

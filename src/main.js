@@ -442,47 +442,9 @@ function buildPillars() {
 }
 
 function buildFuture() {
-  // Jarvis clips play through ONCE each, then hand off to the other.
-  // A plays fully → on ended, B fades in on top and plays fully → on ended,
-  // A restarts and B fades back out. A sits underneath at full opacity the whole
-  // time, so the dissolve never dips to black. Not a timer — driven by playback.
-  const vidA = document.getElementById("jarvisVideoA");
-  const vidB = document.getElementById("jarvisVideoB");
-  [vidA, vidB].forEach((v) => { v.muted = true; v.loop = false; });
-
-  let front = vidA;               // which clip the viewer currently sees
-  const handoff = (next) => {
-    front = next;
-    next.currentTime = 0;
-    next.play().catch(() => {});
-    // B is the top layer; its opacity is what dissolves
-    vidB.classList.toggle("is-visible", next === vidB);
-  };
-  vidA.addEventListener("ended", () => handoff(vidB));
-  vidB.addEventListener("ended", () => handoff(vidA));
-
-  // Play the sequence only while #future is within ~a viewport (start it early,
-  // stop it once well past) so the two clips aren't decoding off-screen. `near`
-  // gates the resume watchdog so it never fights the pause.
-  let near = false;
-  ScrollTrigger.create({
-    trigger: "#future",
-    start: "top bottom+=100%",
-    end: "bottom top-=100%",
-    onToggle: (self) => {
-      near = self.isActive;
-      if (near) front.play().catch(() => {});
-      else { vidA.pause(); vidB.pause(); }
-    },
-  });
-  // resume genuine stalls only (throttled) — never a clip that just ended
-  // (that must hand off) and never while off-screen.
-  let jarvisWatch = 0;
-  gsap.ticker.add((t) => {
-    if (t - jarvisWatch < 0.35) return;
-    jarvisWatch = t;
-    if (near && front.paused && !front.ended) front.play().catch(() => {});
-  });
+  // jarvis-a loops as the section background; attachVideoPlayback handles
+  // muted/loop, near-viewport gating and stall recovery.
+  attachVideoPlayback(document.getElementById("jarvisVideoA"), "#future");
 
   const words = gsap.utils.toArray(".future__quote .word");
 
@@ -490,7 +452,7 @@ function buildFuture() {
     scrollTrigger: {
       trigger: "#future",
       start: "top top",
-      end: "+=220%",
+      end: "+=160%", // shorter hold now that the copilot section follows
       pin: ".future__stage",
       scrub: 0.5,
       anticipatePin: 1,
@@ -503,7 +465,54 @@ function buildFuture() {
 
   tl.to(words, { opacity: 1, yPercent: 0, duration: 1.1, stagger: 0.08, ease: "power1.out" }, 0.2)
     .to(".future__attrib", { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 1.5)
-    .to({}, { duration: 3.6 }, 2.2); // hold with jarvis running
+    .to({}, { duration: 2.2 }, 2.2); // hold with jarvis running
+}
+
+function buildCopilot() {
+  // jarvis-b gets its own stage: letterbox bars retract as the pin scrubs
+  // (the feed opens like a film frame), the clip settles from a push-in,
+  // and the quote rises. A REC timecode ticks off the clip's own clock.
+  const vid = document.getElementById("jarvisVideoB");
+  const timeEl = document.getElementById("cineTime");
+  const words = gsap.utils.toArray(".copilot__quote .word");
+
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: "#copilot",
+      start: "top top",
+      end: "+=180%",
+      pin: ".copilot__stage",
+      scrub: 0.5,
+      anticipatePin: 1,
+    },
+    defaults: { ease: "none" },
+  });
+
+  gsap.set(words, { opacity: 0, yPercent: 50 });
+  gsap.set(".copilot__attrib", { opacity: 0, y: 30 });
+  gsap.set(vid, { transformOrigin: "50% 40%" });
+
+  tl.fromTo(".cine__bar--top", { yPercent: 0 }, { yPercent: -101, duration: 2, ease: "power1.inOut" }, 0)
+    .fromTo(".cine__bar--bot", { yPercent: 0 }, { yPercent: 101, duration: 2, ease: "power1.inOut" }, 0)
+    .fromTo(vid, { scale: 1.18 }, { scale: 1, duration: 3.4 }, 0)
+    .to(words, { opacity: 1, yPercent: 0, duration: 1.1, stagger: 0.09, ease: "power1.out" }, 1.1)
+    .to(".copilot__attrib", { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }, 2.3)
+    .to({}, { duration: 1.4 }, 3); // hold on the open frame
+
+  // created after the pin so its range includes the pin spacer
+  attachVideoPlayback(vid, "#copilot");
+
+  // broadcast-style timecode from the clip's own playhead (throttled)
+  let tcAt = 0;
+  gsap.ticker.add((t) => {
+    if (t - tcAt < 0.2 || !timeEl || vid.paused) return;
+    tcAt = t;
+    const s = vid.currentTime;
+    timeEl.textContent =
+      String(Math.floor(s / 60)).padStart(2, "0") + ":" +
+      String(Math.floor(s % 60)).padStart(2, "0") + ":" +
+      String(Math.floor((s % 1) * 24)).padStart(2, "0");
+  });
 }
 
 function buildWork() {
@@ -869,6 +878,7 @@ function buildRail() {
   if (!rail) return;
   const map = [
     ["#hero", "Top"], ["#stats", "Numbers"], ["#pillars", "Pillars"], ["#future", "Future"],
+    ["#copilot", "Copilot"],
     ["#work", "Work"], ["#caps", "Capabilities"], ["#process", "Process"], ["#calc", "Calculator"],
     ["#trust", "Reviews"], ["#faq", "FAQ"], ["#finale", "Contact"],
   ];
@@ -1318,6 +1328,7 @@ preloadFrames((p) => {
     buildStats();
     buildPillars();
     buildFuture();
+    buildCopilot();
     buildWork();
     buildCaps();
     buildProcess();
