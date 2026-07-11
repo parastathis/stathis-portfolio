@@ -1170,8 +1170,78 @@ body.menu-open .dock { transform: translate(-50%, 140%); }
   .hero__stage.is-deploying { cursor: progress; }
 }
 
+/* ── SPOTLIGHT CARDS ────────────────────────
+   21st.dev "card spotlight" pattern, vanilla: a radial emerald glow tracks
+   the pointer (JS writes --spot-x/--spot-y; the paint is pure CSS). */
+.spotlight { position: relative; }
+.spotlight::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; opacity: 0; transition: opacity 0.4s ease; z-index: 1;
+  background: radial-gradient(320px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(16, 223, 143, 0.09), transparent 65%);
+}
+.spotlight:hover::after { opacity: 1; }
+
+/* ── BORDER BEAM ────────────────────────────
+   21st.dev "border beam", vanilla: a short emerald light orbits the panel's
+   border. A conic gradient rotates via @property; masked so only a 1px ring
+   paints. Degrades to the normal static border where @property is missing. */
+@property --beam {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+.beam { position: relative; }
+.beam::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  padding: 1px; pointer-events: none; z-index: 2;
+  background: conic-gradient(from var(--beam),
+    transparent 0deg, transparent 300deg,
+    rgba(16, 223, 143, 0.9) 330deg, rgba(16, 223, 143, 0) 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  animation: beam-orbit 6s linear infinite;
+}
+@keyframes beam-orbit { to { --beam: 360deg; } }
+
+/* ── CTA SHIMMER ────────────────────────────
+   A soft shine sweeps the primary buttons every few seconds — enough to draw
+   the eye to the conversion path without shouting. */
+.btn--primary { position: relative; overflow: hidden; }
+.btn--primary::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: -80%; width: 60%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
+  transform: skewX(-18deg); pointer-events: none;
+  animation: btn-shine 4.5s ease-in-out infinite;
+}
+@keyframes btn-shine {
+  0%, 64% { left: -80%; }
+  86%, 100% { left: 130%; }
+}
+
+/* ── GREEK MEANDER ──────────────────────────
+   The Greek key band above the footer — a quiet nod to home. */
+.footer::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 12px;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 14'%3E%3Cpath d='M0 13 H19 V1 H5 V8 H12 V5' fill='none' stroke='%2310df8f' stroke-opacity='0.4' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: repeat-x; background-size: auto 12px;
+}
+.footer__origin {
+  margin-top: 18px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em;
+  color: var(--cream-dim);
+}
+.footer__origin .flag { letter-spacing: 0; margin-right: 6px; }
+
 /* respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .marquee__track, .twall__track, .grain { animation: none !important; }
+  .marquee__track, .twall__track, .grain,
+  .beam::before, .btn--primary::after,
+  .nav__pulse, .dock__pulse, .stat__live-dot,
+  .hero__scrollline::after, .work__hint-arrow, .hud__tag--hint { animation: none !important; }
   .reveal { opacity: 1 !important; transform: none !important; filter: none !important; }
+  .spotlight::after { display: none; }
 }

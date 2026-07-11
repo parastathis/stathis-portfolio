@@ -5,12 +5,17 @@ import Lenis from "lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Respect the visitor's motion preference: scroll-driven pins stay (they carry
+// the content), but decorative per-frame effects (snap, tilt, parallax,
+// scramble, magnetic, marquee skew, custom cursor) are skipped entirely.
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 /* ────────────────────────────────────────────
    LENIS ⇆ SCROLLTRIGGER
    ──────────────────────────────────────────── */
 // Desktop: smooth wheel. Mobile: NATIVE touch scroll (syncTouch hijacks the
 // finger and feels laggy/broken on phones) — Lenis only smooths the wheel.
-const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1, smoothWheel: true, syncTouch: false });
+const lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 1, smoothWheel: !REDUCED_MOTION, syncTouch: false });
 window.lenis = lenis; // handy for debugging / programmatic scroll
 window.gsap = gsap;
 window.ScrollTrigger = ScrollTrigger;
@@ -36,6 +41,32 @@ document.querySelectorAll('a[href^="#"]:not(.mmenu a):not(.wcard)').forEach((a) 
     }
   });
 });
+
+/* ────────────────────────────────────────────
+   PIN-SPACER SELF-HEAL
+   ──────────────────────────────────────────── */
+// Observed in the wild (and reproduced in an embedded preview pane): a cold
+// boot that races layout — hidden tab, pane still sizing, fonts/images landing
+// mid-refresh — can leave ScrollTrigger's pin spacers with compounded padding
+// (page height in the hundreds of thousands of px → scroll "goes nowhere",
+// triggers misfire, videos freeze). One ScrollTrigger.refresh() from a sane
+// layout fully restores geometry, so: watch for absurd spacer padding and heal.
+// setInterval (not the rAF ticker) because the corruption happens precisely
+// when rAF is paused. Cheap: reads ~5 nodes every 2.5s.
+function startPinSpacerWatchdog() {
+  let lastHeal = 0;
+  setInterval(() => {
+    const cap = Math.max(window.innerHeight, window.innerWidth, 700) * 12;
+    let sick = false;
+    document.querySelectorAll(".pin-spacer").forEach((s) => {
+      if (parseFloat(s.style.paddingBottom) > cap) sick = true;
+    });
+    if (sick && Date.now() - lastHeal > 5000) {
+      lastHeal = Date.now();
+      ScrollTrigger.refresh();
+    }
+  }, 2500);
+}
 
 /* ────────────────────────────────────────────
    HERO FRAME SEQUENCE
@@ -1018,6 +1049,22 @@ function buildTilt() {
   });
 }
 
+// Spotlight cards (21st.dev "card spotlight" pattern, vanilla): a radial
+// emerald glow tracks the pointer across work cards, testimonial cards,
+// process cores and the calculator panel. One delegated pointermove per
+// container writes two CSS custom props — the paint itself is pure CSS.
+function buildSpotlight() {
+  if (window.matchMedia("(hover: none)").matches) return;
+  document.querySelectorAll(".wcard, .tcard, .pstep__inner, .calc__panel, .stat").forEach((el) => {
+    el.classList.add("spotlight");
+    el.addEventListener("pointermove", (e) => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty("--spot-x", (e.clientX - r.left) + "px");
+      el.style.setProperty("--spot-y", (e.clientY - r.top) + "px");
+    });
+  });
+}
+
 /* ────────────────────────────────────────────
    MODALS · CALCULATOR · CASE FILES
    ──────────────────────────────────────────── */
@@ -1279,22 +1326,26 @@ preloadFrames((p) => {
     buildTwall();
     buildReveals();
     buildFaq();
-    buildMagnetic();
     buildNavState();
-    buildSnap();
     buildRail();
-    buildHeroParallax();
     buildMobileMenu();
-    buildCursor();
-    buildScramble();
-    buildTilt();
-    buildMarqueeReact();
     buildDock();
+    if (!REDUCED_MOTION) {
+      buildMagnetic();
+      buildSnap();
+      buildHeroParallax();
+      buildCursor();
+      buildScramble();
+      buildTilt();
+      buildMarqueeReact();
+      buildSpotlight();
+    }
     buildClock();
     buildCalc();
     buildAudit();
     buildCases();
     ScrollTrigger.refresh();
+    startPinSpacerWatchdog();
 
     // Desktop eager-loads the helmet frames now (off the critical path, so
     // first paint isn't blocked). Touch loads them lazily on the first
