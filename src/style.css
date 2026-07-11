@@ -232,7 +232,11 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
 .bgvideo {
   position: absolute; inset: 0; width: 100%; height: 100%;
   object-fit: cover; filter: saturate(1.05) contrast(1.04);
+  backface-visibility: hidden; /* keep the video on its own GPU layer */
 }
+/* the two clips that are transform-scaled across a whole pin — pin them to a
+   compositor layer so the continuous scale doesn't trigger repaints */
+#builderVideo, #closerVideo { will-change: transform; }
 .jarvis-clip { transition: opacity 1.6s cubic-bezier(0.4, 0, 0.2, 1); }
 #jarvisVideoB { opacity: 0; }
 #jarvisVideoB.is-visible { opacity: 1; }
@@ -791,7 +795,7 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
   transform: scaleX(0); transform-origin: left;
   transition: transform 0.6s cubic-bezier(0.32,0.72,0,1);
 }
-.cap:hover::after { transform: scaleX(1); }
+.cap:hover::after, .cap.is-active::after { transform: scaleX(1); }
 .cap__idx {
   position: relative; z-index: 1;
   font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; color: var(--emerald);
@@ -802,7 +806,7 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
   font-size: clamp(26px, 3.4vw, 54px); line-height: 1; color: var(--cream);
   transition: transform 0.5s cubic-bezier(0.32,0.72,0,1), color 0.4s ease;
 }
-.cap:hover .cap__name { transform: translateX(clamp(8px, 1.5vw, 24px)); }
+.cap:hover .cap__name, .cap.is-active .cap__name { transform: translateX(clamp(8px, 1.5vw, 24px)); color: var(--emerald); }
 .cap__desc {
   grid-column: 2 / 3; position: relative; z-index: 1;
   max-width: 60ch; color: var(--cream-dim); font-size: clamp(13px, 1.2vw, 16px); line-height: 1.55;
@@ -815,18 +819,17 @@ body.menu-open .mmenu__links a:nth-child(6) { transition-delay: 0.48s; }
   font-size: clamp(22px, 2.4vw, 34px); color: var(--cream-dim);
   transition: transform 0.5s cubic-bezier(0.32,0.72,0,1), color 0.4s ease;
 }
-.cap:hover .cap__arrow { transform: translate(6px, -6px) rotate(-45deg); color: var(--emerald); }
-/* cursor-following preview chip */
+.cap:hover .cap__arrow, .cap.is-active .cap__arrow { transform: translate(6px, -6px) rotate(-45deg); color: var(--emerald); }
+/* cursor-following preview chip — GSAP owns transform + opacity (no CSS
+   transition/transform here, or it fights the inline transform GSAP writes) */
 .caps__preview {
   position: fixed; top: 0; left: 0; z-index: 60; pointer-events: none;
   width: 210px; height: 150px; border-radius: 16px; overflow: hidden;
   background: linear-gradient(150deg, var(--emerald), var(--emerald-deep));
   box-shadow: 0 30px 70px -20px rgba(16,223,143,0.5);
   display: flex; flex-direction: column; justify-content: space-between; padding: 18px;
-  opacity: 0; transform: translate(-50%, -50%) scale(0.8);
-  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.32,0.72,0,1);
+  opacity: 0; will-change: transform, opacity;
 }
-.caps__preview.is-on { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .caps__preview-num { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; color: rgba(6,8,6,0.65); }
 .caps__preview-label { font-family: var(--display); font-size: 30px; line-height: 0.95; color: var(--ink); }
 @media (hover: none) {
@@ -957,8 +960,9 @@ body.has-cursor, body.has-cursor * { cursor: none !important; }
   .hero__line { letter-spacing: 0; }
   .hero__sub { font-size: 14px; }
   .hero__kicker { font-size: 10px; letter-spacing: 0.32em; }
-  /* the hover-only lens hint & side telemetry are meaningless on touch */
-  .hud__tag--hint, .hud__tag--side { display: none; }
+  /* side telemetry is meaningless on touch; the hint now doubles as the
+     tap-to-deploy affordance so it stays visible */
+  .hud__tag--side { display: none; }
   .hero__hud { inset: 66px 14px; }
 
   /* CTAs go full-width and stack */
@@ -1157,6 +1161,14 @@ select.field__input { appearance: none; cursor: pointer; }
 .dock.is-in { transform: translate(-50%, 0); }
 body.menu-open .dock { transform: translate(-50%, 140%); }
 @media (max-width: 760px) { .dock { display: inline-flex; } }
+
+/* touch press feedback — GSAP magnetic drift is desktop-only, so on touch the
+   buttons/cards get a quick CSS press instead (no per-frame work) */
+@media (hover: none) {
+  .btn, .magnetic, .wcard { transition: transform 0.16s ease, box-shadow 0.16s ease; }
+  .btn:active, .magnetic:active, .wcard:active { transform: scale(0.965); }
+  .hero__stage.is-deploying { cursor: progress; }
+}
 
 /* respect reduced-motion */
 @media (prefers-reduced-motion: reduce) {

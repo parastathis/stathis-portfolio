@@ -52,7 +52,11 @@ const playhead = { frame: 0 };
 const lens = { x: 0, y: 0, r: 0, tx: 0, ty: 0, tr: 0, seeded: false };
 
 function sizeCanvas() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  // Cap the backing store at 1.5× device pixels. The hero redraws a large
+  // frame every scroll tick during a long pin; a full 2× store on a retina
+  // panel quadruples the fill cost for no visible gain and is a real source of
+  // scroll stutter. 1.5× stays crisp while cutting ~44% of the pixels.
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
   canvas.width = canvas.clientWidth * dpr;
   canvas.height = canvas.clientHeight * dpr;
   renderFrame();
@@ -150,41 +154,80 @@ async function preloadFrames(onProgress) {
   await loadImages(helmetFrames, frameCount, () => onProgress(++n / frameCount));
 }
 
-// The helmet sequence only feeds the desktop hover-lens overlay — load it AFTER
-// the site is interactive, and never on touch (no hover = it can't be revealed).
-async function loadHelmetFrames() {
-  if (!CAN_HOVER || frameCount) return;
-  frameCount = await loadSequence("/media/hero", helmetFrames);
-  if (frameCount) await loadImages(helmetFrames, frameCount);
+// The helmet sequence feeds the reveal overlay. Desktop eager-loads it after
+// boot (a hover can fire any time); touch lazy-loads it on the first tap-to-
+// deploy, so a phone visitor who never taps never pays the extra decode budget
+// (the reason it used to be desktop-only). Runs at most once — the in-flight
+// promise is memoised.
+let helmetLoad = null;
+function ensureHelmet() {
+  if (frameCount) return Promise.resolve(frameCount);
+  if (helmetLoad) return helmetLoad;
+  helmetLoad = loadSequence("/media/hero", helmetFrames).then(async (count) => {
+    frameCount = count;
+    if (count) await loadImages(helmetFrames, count);
+    return count;
+  });
+  return helmetLoad;
 }
 
 function initLens() {
-  // lens reveals the helmet overlay on hover — desktop only, needs both seqs
-  if (!CAN_HOVER || !faceCount) return;
+  // needs the base face sequence to reveal the helmet through
+  if (!faceCount) return;
   const stage = document.querySelector(".hero__stage");
-  stage.style.cursor = "crosshair";
+  const hint = document.querySelector(".hud__tag--hint");
 
-  stage.addEventListener("mousemove", (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const scale = canvas.width / rect.width;
-    const x = (e.clientX - rect.left) * scale;
-    const y = (e.clientY - rect.top) * scale;
-    if (!lens.seeded) { lens.x = x; lens.y = y; lens.seeded = true; }
-    lens.tx = x; lens.ty = y;
-    // active zone: ellipse around the head (center, upper third)
-    const dx = (x - canvas.width * 0.5) / (canvas.width * 0.24);
-    const dy = (y - canvas.height * 0.34) / (canvas.height * 0.32);
-    lens.tr = dx * dx + dy * dy <= 1 ? Math.min(canvas.width, canvas.height) * 0.2 : 0;
-  });
-  stage.addEventListener("mouseleave", () => { lens.tr = 0; });
-
+  // shared easing ticker — animates the lens open/closed and keeps the blob
+  // wobble alive while it's open. Drives both the hover and tap paths.
   gsap.ticker.add(() => {
-    // keep rendering while the lens is open so the blob wobble animates
     if (lens.r <= 1 && Math.abs(lens.r - lens.tr) < 0.5) return;
     lens.x += (lens.tx - lens.x) * 0.2;
     lens.y += (lens.ty - lens.y) * 0.2;
     lens.r += (lens.tr - lens.r) * 0.15;
     renderFrame();
+  });
+
+  if (CAN_HOVER) {
+    // DESKTOP — the lens tracks the cursor over the head zone.
+    stage.style.cursor = "crosshair";
+    stage.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const scale = canvas.width / rect.width;
+      const x = (e.clientX - rect.left) * scale;
+      const y = (e.clientY - rect.top) * scale;
+      if (!lens.seeded) { lens.x = x; lens.y = y; lens.seeded = true; }
+      lens.tx = x; lens.ty = y;
+      // active zone: ellipse around the head (center, upper third)
+      const dx = (x - canvas.width * 0.5) / (canvas.width * 0.24);
+      const dy = (y - canvas.height * 0.34) / (canvas.height * 0.32);
+      lens.tr = dx * dx + dy * dy <= 1 ? Math.min(canvas.width, canvas.height) * 0.2 : 0;
+    });
+    stage.addEventListener("mouseleave", () => { lens.tr = 0; });
+    return;
+  }
+
+  // TOUCH — tap the hero to deploy / retract the helmet lens at the head.
+  // A tap fires `click`; a swipe-to-scroll does not, so scrolling still works.
+  // The helmet sequence loads on the first tap.
+  if (hint) hint.textContent = "TAP TO DEPLOY THE HELMET";
+  let open = false, busy = false;
+  stage.addEventListener("click", async () => {
+    if (busy) return;
+    if (!frameCount) {
+      busy = true;
+      stage.classList.add("is-deploying");
+      if (hint) hint.textContent = "DEPLOYING…";
+      await ensureHelmet();
+      stage.classList.remove("is-deploying");
+      busy = false;
+      if (!frameCount) { if (hint) hint.textContent = ""; return; } // seq missing
+    }
+    open = !open;
+    const cx = canvas.width * 0.5, cy = canvas.height * 0.34;
+    lens.x = lens.tx = cx; lens.y = lens.ty = cy; lens.seeded = true;
+    lens.tr = open ? Math.min(canvas.width, canvas.height) * 0.26 : 0;
+    if (hint) hint.textContent = open ? "TAP TO RETRACT" : "TAP TO DEPLOY THE HELMET";
+    stage.classList.toggle("helmet-open", open);
   });
 }
 
@@ -481,9 +524,30 @@ function buildWork() {
 function buildCaps() {
   const list = document.getElementById("capsList");
   const preview = document.getElementById("capsPreview");
-  if (!list || !preview || window.matchMedia("(hover: none)").matches) return;
+  if (!list) return;
+
+  // TOUCH — no cursor to trail a preview chip; tap a row to highlight it
+  // (rows are already expanded via CSS). One active at a time.
+  if (window.matchMedia("(hover: none)").matches) {
+    list.querySelectorAll(".cap").forEach((cap) => {
+      cap.addEventListener("click", () => {
+        const wasActive = cap.classList.contains("is-active");
+        list.querySelectorAll(".cap").forEach((c) => c.classList.remove("is-active"));
+        if (!wasActive) cap.classList.add("is-active");
+      });
+    });
+    return;
+  }
+
+  if (!preview) return;
   const numEl = preview.querySelector(".caps__preview-num");
   const labelEl = preview.querySelector(".caps__preview-label");
+  // GSAP owns EVERY transform on the chip (position + centering + scale). The
+  // old code let CSS set `translate(-50%,-50%) scale()` while GSAP wrote x/y —
+  // GSAP's inline transform then clobbered the CSS `.is-on` scale, so the chip
+  // was permanently stuck at scale 0.8 and the grow-in never fired. xPercent/
+  // yPercent do the centering so nothing fights.
+  gsap.set(preview, { xPercent: -50, yPercent: -50, scale: 0.8, autoAlpha: 0 });
   const px = gsap.quickTo(preview, "x", { duration: 0.5, ease: "power3.out" });
   const py = gsap.quickTo(preview, "y", { duration: 0.5, ease: "power3.out" });
 
@@ -492,10 +556,11 @@ function buildCaps() {
     cap.addEventListener("mouseenter", () => {
       numEl.textContent = cap.dataset.num;
       labelEl.textContent = cap.dataset.cap;
-      preview.classList.add("is-on");
+      gsap.to(preview, { scale: 1, autoAlpha: 1, duration: 0.35, ease: "power3.out", overwrite: true });
     });
   });
-  list.addEventListener("mouseleave", () => preview.classList.remove("is-on"));
+  list.addEventListener("mouseleave", () =>
+    gsap.to(preview, { scale: 0.8, autoAlpha: 0, duration: 0.3, ease: "power2.out", overwrite: true }));
 }
 
 // Process = sticky stacking cards. Each card shrinks and dims as the next one
@@ -608,10 +673,12 @@ function buildFinale() {
   }));
 
   const closer = document.getElementById("closerVideo");
+  closer.muted = true;
+  closer.loop = false; // the walk plays through ONCE, then freezes on last frame
 
   // The break AUTO-PLAYS, timed to the walk — no precise scrubbing needed.
   // Real seconds: he walks up (0–2s), the letters break on "impact" (~2.1s),
-  // then I walk through and the CTAs rise. It restarts each time you arrive.
+  // then I walk through and the CTAs rise. Plays exactly once (see below).
   const tl = gsap.timeline({ paused: true, defaults: { ease: "none" } });
 
   gsap.set("#closerVideo", { transformOrigin: "50% 42%" });
@@ -649,20 +716,28 @@ function buildFinale() {
   // CTAs rise as I walk through
   tl.to("#finaleCtas", { opacity: 1, y: 0, duration: 0.8, ease: "power2.out" }, 3.7);
 
-  // Reset the letters/matte so a re-entry can replay the break.
-  const reset = () => { tl.pause(0); };
-
-  // Short pin holds the scene while the break plays itself out; entering the
-  // section restarts the walk (currentTime 0) and plays the sequence.
-  ScrollTrigger.create({
+  // The whole sequence runs EXACTLY ONCE. It starts the first time you reach
+  // the section and plays in real time (walk → letters shatter → CTAs). Leave
+  // mid-way and it pauses, resuming where you left off. Once it has fully played
+  // the letters stay shattered forever — coming back does nothing, the walk
+  // never loops or replays. (closer is deliberately NOT registered with
+  // attachVideoPlayback, so nothing resumes it after it ends.)
+  let done = false;
+  tl.eventCallback("onComplete", () => { done = true; });
+  const pin = ScrollTrigger.create({
     trigger: "#finale", start: "top top", end: "+=140%",
     pin: ".finale__stage", anticipatePin: 1,
-    onEnter: () => { try { closer.currentTime = 0; } catch (e) {} closer.play().catch(() => {}); tl.restart(); },
-    onEnterBack: () => { tl.play(); },
-    onLeaveBack: reset,
+    onToggle: (self) => {
+      if (done) return;
+      if (self.isActive) { closer.play().catch(() => {}); tl.play(); }
+      else { closer.pause(); tl.pause(); }
+    },
   });
-
-  attachVideoPlayback(closer, "#finale");
+  // if the tab is hidden while the walk is still running, don't let the browser
+  // silently pause it forever — resume on return, but never once it's done.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !done && pin.isActive) closer.play().catch(() => {});
+  });
 }
 
 /* ────────────────────────────────────────────
@@ -1221,9 +1296,11 @@ preloadFrames((p) => {
     buildCases();
     ScrollTrigger.refresh();
 
-    // Now that the site is interactive, lazily fetch the helmet lens frames
-    // (desktop only) — off the critical path, so first paint isn't blocked.
-    loadHelmetFrames();
+    // Desktop eager-loads the helmet frames now (off the critical path, so
+    // first paint isn't blocked). Touch loads them lazily on the first
+    // tap-to-deploy inside initLens, so phone visitors who never tap don't pay
+    // the extra decode budget.
+    if (CAN_HOVER) ensureHelmet();
 
     // Keep the hero canvas crisp on resize. CRITICAL: observe the NON-pinned
     // parent and NEVER call ScrollTrigger.refresh() here — observing the pinned
